@@ -54,29 +54,29 @@
       ;; (contains? (:accept-states dfa) state)
       (let [[letter & rest-chars] chars
             new-word (conj curr-word letter)
-            new-length (inc curr-length)]
-        (let [desc (list state letter)]
-          (if-not (contains? (:transitions dfa) desc) 
-            ;; crashed
-            (list (clojure.string/join valid-word) valid-length valid-kind)
-            (let [new-state (get (:transitions dfa) desc)]
-              (if (contains? (:accept-states dfa) new-state)
-                ;; update valid-word, valid-length and valid-kind
-                (recur rest-chars
-                       new-state
-                       new-word
-                       new-length
-                       new-word
-                       new-length
-                       (get (:accept-states dfa) new-state))
-                ;; keep the same
-                (recur rest-chars
-                       new-state
-                       new-word
-                       new-length
-                       valid-word
-                       valid-length
-                       valid-kind)))))))))
+            new-length (inc curr-length)
+            desc (list state letter)]
+        (if-not (contains? (:transitions dfa) desc) 
+          ;; crashed: we are done
+          (list (clojure.string/join valid-word) valid-length valid-kind)
+          (let [new-state (get (:transitions dfa) desc)]
+            (if (contains? (:accept-states dfa) new-state)
+              ;; update valid-word, valid-length and valid-kind
+              (recur rest-chars
+                     new-state
+                     new-word
+                     new-length
+                     new-word
+                     new-length
+                     (get (:accept-states dfa) new-state))
+              ;; keep the same
+              (recur rest-chars
+                     new-state
+                     new-word
+                     new-length
+                     valid-word
+                     valid-length
+                     valid-kind))))))))
 
 (defn scan-DFA
   "Scans input with dfa by Maximal Munch, returns list of tokens and their kind"
@@ -91,4 +91,4 @@
             (println "Invalid program! Scanning error found at:")
             (println (clojure.string/join (take 20 remaining))))
           (recur (drop length remaining)
-                 (conj tokens (list (clojure.string/join word) kind))))))))
+                 (conj tokens (list word kind))))))))
