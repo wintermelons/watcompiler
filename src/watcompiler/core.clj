@@ -1,5 +1,6 @@
 (ns watcompiler.core
   (:require [watcompiler.dfa :refer :all]
+            [watcompiler.nfa :refer :all]
             [watcompiler.lang :refer :all])
   (:gen-class))
 

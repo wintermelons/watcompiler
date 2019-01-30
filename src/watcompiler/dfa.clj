@@ -1,9 +1,10 @@
 (ns watcompiler.dfa)
 
+;; DFA definition
 (defrecord DFA
   [alphabet states start accept-states transitions])
 
-(defn make-transition
+(defn make-transition-DFA
   [transitions]
   (loop [remaining transitions
          transition-map {}]
@@ -11,7 +12,7 @@
       transition-map
       (let [[s-from s-to alphabets] (first remaining)]
         (recur (rest remaining)
-               (if (vector? alphabets)
+               (if (or (seq? alphabets) (vector? alphabets))
                  (reduce #(assoc %1 (list s-from %2) s-to)
                          transition-map
                          alphabets)
@@ -25,7 +26,9 @@
   (loop [chars (char-array input)
          state (:start dfa)]
     (if (empty? chars)
-      (contains? (:accept-states dfa) state)
+      (if (contains? (:accept-states dfa) state)
+        (get (:accept-states dfa) state)
+        false)
       (let [[letter & rest-chars] chars]
         (if (contains? (:alphabet dfa) letter)
           (let [desc (list state letter)]

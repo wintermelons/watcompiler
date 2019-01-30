@@ -8,26 +8,26 @@
 
 (deftest running-dfa
   (testing "identifiers"
-    (is (true? (run "x")))
-    (is (true? (run "x1")))
-    (is (true? (run "xy")))
-    (is (true? (run "my_3_good_var")))
-    (is (true? (run "x12345")))
+    (is (= :IDENTIFIER (run "x")))
+    (is (= :IDENTIFIER (run "x1")))
+    (is (= :IDENTIFIER (run "xy")))
+    (is (= :IDENTIFIER (run "my_3_good_var")))
+    (is (= :IDENTIFIER (run "x12345")))
     (is (false? (run "123x")))
     (is (false? (run "3.x"))))
   (testing "numbers"
-    (is (true? (run "123")))
-    (is (true? (run "0")))
-    (is (true? (run "3.14")))
-    (is (true? (run "0.004")))
+    (is (= :INTEGER (run "123")))
+    (is (= :ZERO (run "0")))
+    (is (= :FLOAT (run "3.14")))
+    (is (= :FLOAT (run "0.004")))
     (is (false? (run "00")))
     (is (false? (run "3.x")))
     (is (false? (run "03.14"))))
   (testing "operators"
-    (is (true? (run "+")))
+    (is (= :OPERATOR (run "+")))
     (is (false? (run "-32")))) ;; single symbol only
   (testing "whitespace"
-    (is (true? (run " "))))
+    (is (= :WHITESPACE (run " "))))
   (testing "multiple symbols"
     (is (false? (run "x * y / 3.14 +6"))))
   (testing "unknown symbols"
@@ -43,7 +43,7 @@
          (munch "xyz + 123")))
   (is (= (list "x" 1 :IDENTIFIER)
          (munch "x * y / 3.14 +6")))
-  (is (= (list "0" 1 :INTEGER)
+  (is (= (list "0" 1 :ZERO)
          (munch "00")))
   (is (= (list "1" 1 :INTEGER)
          (munch "1x")))
