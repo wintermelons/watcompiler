@@ -1,10 +1,24 @@
 (ns watcompiler.dfa)
 
 ;; DFA definition
+;; See watcompiler.lang/simple-dfa for an example.
+;; A DFA is a 5-tuple of
+;;   alphabet:      set of letters; must be characters
+;;   states:        set of states; can be any type, even sets
+;;   start:         the start state; must be in states
+;;   accept-states: hashmap state => kind
+;;   transitions:   hashmap (state, letter) => state
 (defrecord DFA
   [alphabet states start accept-states transitions])
 
+(defn make-DFA
+  "Constructor for DFA"
+  [alphabet states start accept-states transitions]
+  ;; TODO: Add validations
+  (->DFA alphabet states start accept-states transitions))
+
 (defn make-transition-DFA
+  "Makes a dfa transitions function by specifying lists of letters at once"
   [transitions]
   (loop [remaining transitions
          transition-map {}]
@@ -16,11 +30,11 @@
                  (reduce #(assoc %1 (list s-from %2) s-to)
                          transition-map
                          alphabets)
-                 (assoc transition-map 
-                        (list s-from alphabets) 
+                 (assoc transition-map
+                        (list s-from alphabets)
                         s-to)))))))
 
-(defn run-DFA 
+(defn run-DFA
   "Runs dfa with input, returns true if accepted"
   [dfa input]
   (loop [chars (char-array input)
@@ -36,7 +50,7 @@
               (recur rest-chars
                      (get (:transitions dfa) desc))
               false))
-          (do 
+          (do
             (binding [*out* *err*]
               (println "Warning: Letter" letter "is not in alphabet"))
             false))))))
@@ -59,7 +73,7 @@
             new-word (conj curr-word letter)
             new-length (inc curr-length)
             desc (list state letter)]
-        (if-not (contains? (:transitions dfa) desc) 
+        (if-not (contains? (:transitions dfa) desc)
           ;; crashed: we are done
           (list (clojure.string/join valid-word) valid-length valid-kind)
           (let [new-state (get (:transitions dfa) desc)]
@@ -82,15 +96,16 @@
                      valid-kind))))))))
 
 (defn scan-DFA
-  "Scans input with dfa by Maximal Munch, returns list of tokens and their kind"
+  "Scans input with dfa by Maximal Munch,
+  returns list of tokens and their kind, or nil if failed"
   [dfa input]
   (loop [remaining input
          tokens []]
-    (if (empty? remaining) 
+    (if (empty? remaining)
       tokens
       (let [[word length kind] (munch-DFA dfa remaining)]
         (if (= length 0)
-          (binding [*out* *err*] 
+          (binding [*out* *err*]
             (println "Invalid program! Scanning error found at:")
             (println (clojure.string/join (take 20 remaining))))
           (recur (drop length remaining)
