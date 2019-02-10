@@ -8,9 +8,9 @@
   (make-CFG #{\( \)}
             #{:S}
             :S
-            [(list :S (list :S :S))
-             (list :S (list \( :S \)))
-             (list :S (list))]))
+            [[:S [:S :S]]
+             [:S [\( :S \)]]
+             [:S []]]))
 
 
 (deftest derivations
@@ -35,4 +35,8 @@
     (is (= (list (vec (char-array "((())()())()")) 13)
            (rightmost testing-cfg [0 1 2 1 0 0 1 2 1 2 1 1 2])))
     (is (= (list (vec (char-array "((())()())()")) 13)
-           (rightmost testing-cfg [0 1 2 1 0 1 2 0 1 2 1 1 2])))))
+           (rightmost testing-cfg [0 1 2 1 0 1 2 0 1 2 1 1 2]))))
+  (testing "rightmost-tree"
+    (is (= [:S [\( [:S [[:S [\( [:S []] \)]]
+                        [:S [\( [:S [\( [:S []] \)]] \)]]]] \)]]
+           (rightmost-tree testing-cfg [1 0 1 1 2 1 2])))))

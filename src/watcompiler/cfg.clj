@@ -7,14 +7,14 @@
 ;;   terminals:     set of letters; must be characters
 ;;   non-terminals: set of symbols; can be any type, must be disjoint from terminals
 ;;   start:         symbol to start
-;;   rules:         vector of (symbol (symbol ...))
+;;   productions:   vector of (symbol (symbol ...))
 (defrecord CFG
-  [terminals non-terminals start rules])
+  [terminals non-terminals start productions])
 
 (defn make-CFG
   "Constructor for CFG"
-  [terminals non-terminals start rules]
-  (->CFG terminals non-terminals start rules))
+  [terminals non-terminals start productions]
+  (->CFG terminals non-terminals start productions))
 
 (defn leftmost
   "Follow a list of leftmost derivations to obtain a final word
@@ -38,7 +38,7 @@
                  derivations
                  steps)
           ;; derive using rule
-          (let [[from to] (nth (:rules cfg) (first derivations))]
+          (let [[from to] (nth (:productions cfg) (first derivations))]
             (if (not (= from (first buffer)))
               ;; derivation does not match first non-terminal
               (list (into produced buffer) steps)
@@ -68,7 +68,7 @@
                  derivations
                  steps)
           ;; derive using rule
-          (let [[from to] (nth (:rules cfg) (first derivations))]
+          (let [[from to] (nth (:productions cfg) (first derivations))]
             (if (not (= from (first buffer)))
               ;; derivation does not match first non-terminal
               (list (vec (concat (reverse buffer) produced)) steps)
@@ -77,4 +77,43 @@
                      (rest derivations)
                      (inc steps)))))))))
 
+(defn rightmost-tree
+  "Builds a parse tree from a list of derivations; builds top-down"
+  [cfg derivations]
+  (loop [access-ks [0]
+         tree [(:start cfg)]
+         derivations derivations]
+    (if (or (empty? derivations)  ;; no more derivations
+            (= access-ks [-1]))   ;; end of the tree
+      ;; we are done
+      (first tree)
+      (let [curr-sym (get-in tree access-ks)]
+        (if (nil? curr-sym)
+          ;; reached end of subtree
+          (let [parent (pop (pop access-ks))]
+            (recur (conj (pop parent) (dec (peek parent)))
+                   tree
+                   derivations))
+          (if (vector? curr-sym)
+            ;; need to recurse into subtree
+            (recur (conj access-ks (dec (count curr-sym)))
+                   tree
+                   derivations)
+            ;; we are at leaf
+            (if (contains? (:terminals cfg) curr-sym)
+              ;; terminal
+              (recur (conj (pop access-ks) (dec (peek access-ks)))
+                     tree
+                     derivations)
+              ;; we see a non-terminal
+              (let [[from to] (nth (:productions cfg) (first derivations))]
+                (if (= from curr-sym)
+                  (recur (conj access-ks 1 (dec (count to)))
+                         (assoc-in tree access-ks [from to])
+                         (rest derivations))
+                  nil)))))))))
 
+(defn lr0
+  "Builds a LR(0) DFA using a list of production rules"
+  [cfg]
+  42)
