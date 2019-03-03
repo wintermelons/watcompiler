@@ -317,7 +317,7 @@
                                   [do         dou      \u]
                                   [dou        doub     \b]
                                   [doub       doubl    \l]
-                                  [double     double   \e]]))))
+                                  [doubl      double   \e]]))))
 
 (def import-nfa
   (let [stateS    (gensym :S)
@@ -944,12 +944,12 @@
                                   [syn            sync         \c]
                                   [sync           synch        \h]
                                   [synch          synchr       \r]
-                                  [synchro        synchro      \o]
-                                  [synchron       synchron     \n]
-                                  [synchroni      synchroni    \i]
-                                  [synchroniz     synchroniz   \z]
-                                  [synchronize    synchronize  \e]
-                                  [synchronized   synchronized \d]]))))
+                                  [synchr         synchro      \o]
+                                  [synchro        synchron     \n]
+                                  [synchron       synchroni    \i]
+                                  [synchroni      synchroniz   \z]
+                                  [synchroniz     synchronize  \e]
+                                  [synchronize    synchronized \d]]))))
 
 (def keywords-nfa
   (let [stateS (gensym :S)]
@@ -1227,20 +1227,29 @@
 
 
 ;; complete nfa from all of the individual RE nfas
-;; boolean
 ;; int-literal
-;; keywords
 ;; operators
+;; boolean
+;; keywords
 (def complete-nfa
   (let [stateS (gensym :S)]
   ;; use default constructor because we no longer have the merged accept-map
   (->NFA (into #{} )
-         (merge-nfas-states integer-literal-nfa operators-nfa)
+         (merge-nfas-states integer-literal-nfa operators-nfa boolean-nfa keywords-nfa)
          stateS
-         (merge-nfas (:accept-states integer-literal-nfa) (:accept-states operators-nfa))
+         (merge-nfas (:accept-states integer-literal-nfa)
+                     (:accept-states operators-nfa)
+                     (:accept-states boolean-nfa)
+                     (:accept-states keywords-nfa))
          (merge-nfas (:transitions integer-literal-nfa)
                      (:transitions operators-nfa)
+                     (:transitions boolean-nfa)
+                     (:transitions keywords-nfa)
                      (make-transition-NFA [[stateS (:start integer-literal-nfa) e]
-                                           [stateS (:start operators-nfa) e]]))
+                                           [stateS (:start operators-nfa) e]
+                                           [stateS (:start boolean-nfa) e]
+                                           [stateS (:start keywords-nfa) e]]))
          (merge-nfas (:accept-priorities integer-literal-nfa)
-                     (:accept-priorities operators-nfa)))))
+                     (:accept-priorities operators-nfa)
+                     (:accept-priorities boolean-nfa)
+                     (:accept-priorities keywords-nfa)))))

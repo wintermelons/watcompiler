@@ -10,7 +10,91 @@
   (is (= :INTEGER (run-NFA integer-literal-nfa "109"))))
 
 ;; Merged NFA test
-(deftest merged-test
+(deftest operator-test
+  ;; Operators
+  (is (= :OPERATOR (run-NFA operators-nfa "+")))
+  (is (= :OPERATOR (run-NFA operators-nfa "++")))
+  (is (= :OPERATOR (run-NFA operators-nfa ">")))
+  (is (= :OPERATOR (run-NFA operators-nfa ">=")))
+  (is (= :OPERATOR (run-NFA operators-nfa ">>")))
+  (is (= :OPERATOR (run-NFA operators-nfa ">>=")))
+  (is (= :OPERATOR (run-NFA operators-nfa ">>>")))
+  (is (= :OPERATOR (run-NFA operators-nfa ">>>=")))
+  (is (= :OPERATOR (run-NFA operators-nfa "&")))
+  (is (= :OPERATOR (run-NFA operators-nfa "^=")))
+  (is (= :OPERATOR (run-NFA operators-nfa "^")))
+  (is (= :OPERATOR (run-NFA operators-nfa "<<")))
+  (is (= :OPERATOR (run-NFA operators-nfa "=")))
+  (is (= :OPERATOR (run-NFA operators-nfa "==")))
+  (is (= :OPERATOR (run-NFA operators-nfa "!")))
+  (is (= :OPERATOR (run-NFA operators-nfa "!="))))
+
+(deftest boolean-test
+  (is (= :BOOLEAN (run-NFA boolean-nfa "true")))
+  (is (= :BOOLEAN (run-NFA boolean-nfa "false")))
+  (is (= false (run-NFA boolean-nfa "tru")))
+  (is (= false (run-NFA boolean-nfa "fals"))))
+
+;; Keyword test
+(deftest keyword-test
+  ;; Individual Keywords on their nfas
+  (is (= :KEYWORD (run-NFA int-nfa "int")))
+  (is (= :KEYWORD (run-NFA abstract-nfa "abstract")))
+  (is (= :KEYWORD (run-NFA default-nfa "default"))))
+
+(deftest all-test
+  ;; All Test
+  (is (= :KEYWORD (run-NFA complete-nfa "abstract")))
+  (is (= :KEYWORD (run-NFA complete-nfa "default")))
+  (is (= :KEYWORD (run-NFA complete-nfa "if")))
+  (is (= :KEYWORD (run-NFA complete-nfa "private")))
+  (is (= :KEYWORD (run-NFA complete-nfa "this")))
+  (is (= :KEYWORD (run-NFA complete-nfa "boolean")))
+  (is (= :KEYWORD (run-NFA complete-nfa "do")))
+  (is (= :KEYWORD (run-NFA complete-nfa "implements")))
+  (is (= :KEYWORD (run-NFA complete-nfa "protected")))
+  (is (= :KEYWORD (run-NFA complete-nfa "break")))
+  (is (= :KEYWORD (run-NFA complete-nfa "double")))
+  (is (= :KEYWORD (run-NFA complete-nfa "import")))
+  (is (= :KEYWORD (run-NFA complete-nfa "public")))
+  (is (= :KEYWORD (run-NFA complete-nfa "throws")))
+  (is (= :KEYWORD (run-NFA complete-nfa "byte")))
+  (is (= :KEYWORD (run-NFA complete-nfa "else")))
+  (is (= :KEYWORD (run-NFA complete-nfa "instanceof")))
+  (is (= :KEYWORD (run-NFA complete-nfa "return")))
+  (is (= :KEYWORD (run-NFA complete-nfa "transient")))
+  (is (= :KEYWORD (run-NFA complete-nfa "case")))
+  (is (= :KEYWORD (run-NFA complete-nfa "extends")))
+  (is (= :KEYWORD (run-NFA complete-nfa "int")))
+  (is (= :KEYWORD (run-NFA complete-nfa "short")))
+  (is (= :KEYWORD (run-NFA complete-nfa "try")))
+  (is (= :KEYWORD (run-NFA complete-nfa "catch")))
+  (is (= :KEYWORD (run-NFA complete-nfa "interface")))
+  (is (= :KEYWORD (run-NFA complete-nfa "static")))
+  (is (= :KEYWORD (run-NFA complete-nfa "void")))
+  (is (= :KEYWORD (run-NFA complete-nfa "char")))
+  (is (= :KEYWORD (run-NFA complete-nfa "finally")))
+  (is (= :KEYWORD (run-NFA complete-nfa "long")))
+  (is (= :KEYWORD (run-NFA complete-nfa "strictfp")))
+  (is (= :KEYWORD (run-NFA complete-nfa "volatile")))
+  (is (= :KEYWORD (run-NFA complete-nfa "class")))
+  (is (= :KEYWORD (run-NFA complete-nfa "float")))
+  (is (= :KEYWORD (run-NFA complete-nfa "native")))
+  (is (= :KEYWORD (run-NFA complete-nfa "super")))
+  (is (= :KEYWORD (run-NFA complete-nfa "while")))
+  (is (= :KEYWORD (run-NFA complete-nfa "const")))
+  (is (= :KEYWORD (run-NFA complete-nfa "for")))
+  (is (= :KEYWORD (run-NFA complete-nfa "new")))
+  (is (= :KEYWORD (run-NFA complete-nfa "switch")))
+  (is (= :KEYWORD (run-NFA complete-nfa "continue")))
+  (is (= :KEYWORD (run-NFA complete-nfa "goto")))
+  (is (= :KEYWORD (run-NFA complete-nfa "package")))
+  (is (= :KEYWORD (run-NFA complete-nfa "synchronized")))
+  ;; Booleans
+  (is (= :BOOLEAN (run-NFA complete-nfa "true")))
+  (is (= :BOOLEAN (run-NFA complete-nfa "false")))
+  (is (= false (run-NFA complete-nfa "tru")))
+  (is (= false (run-NFA complete-nfa "fals")))
   ;; Integer
   (is (= :INTEGER (run-NFA complete-nfa "109")))
   ;; Operators
@@ -30,24 +114,3 @@
   (is (= :OPERATOR (run-NFA complete-nfa "==")))
   (is (= :OPERATOR (run-NFA complete-nfa "!")))
   (is (= :OPERATOR (run-NFA complete-nfa "!="))))
-  ;; Keywords
-  ;; (is (= :KEYWORD (run-NFA complete-nfa "int"))))
-
-(deftest boolean-test
-  (is (= :BOOLEAN (run-NFA boolean-nfa "true")))
-  (is (= :BOOLEAN (run-NFA boolean-nfa "false")))
-  (is (= false (run-NFA boolean-nfa "tru")))
-  (is (= false (run-NFA boolean-nfa "fals"))))
-
-;; Keyword test
-(deftest keyword-test
-  ;; Individual Keywords on their nfas
-  (is (= :KEYWORD (run-NFA int-nfa "int")))
-  (is (= :KEYWORD (run-NFA abstract-nfa "abstract")))
-  (is (= :KEYWORD (run-NFA default-nfa "default")))
-  ;; All Test
-  (is (= :KEYWORD (run-NFA keywords-nfa "abstract")))
-  (is (= :KEYWORD (run-NFA keywords-nfa "default")))
-  (is (= :KEYWORD (run-NFA keywords-nfa "if")))
-  (is (= :KEYWORD (run-NFA keywords-nfa "private")))
-  (is (= :KEYWORD (run-NFA keywords-nfa "this"))))
