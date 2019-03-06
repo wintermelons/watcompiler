@@ -9,21 +9,36 @@
   [& args]
   (apply merge args))
 
-(defn merge-nfas-states
-  [& args]
-  (apply union (:states args)))
+;; parse each string to form the nfa and then form complete nfa
+;; form the states in the nfa
+(defn string-to-nfa
+  [word wordtype]
+  (let
+    [stateS (gensym :s)
 
-(defn merge-nfas-accept-states
-  [& args]
-  (apply merge (:accept-states args)))
+      ;; List of substrings of word, stored as strings
+      states-map (rest (reductions str (str) word))
 
-(defn merge-nfas-transitions
-  [& args]
-  (apply merge (:transitions args)))
+      ;; Key: substring of word, Value: gensym associated with this state
+      gensym-map (into (sorted-map) (for [c states-map]
+                                         [c (gensym c)]))
+      ;; Key: gensym value, Value: char to get to this state
+      states-char-map (into (sorted-map)
+                                        (for [pair (map list (vals gensym-map) (seq word))]
+                                             [(first pair) (second pair)]))
 
-(defn merge-nfas-accept-priorities
-  [& args]
-  (apply merge (:accept-priorities args)))
+      ;; Accept states
+      accept-states-map {(get gensym-map word) (list wordtype 0)}
+
+      ;; transitions from previous substring gensym to next substring gensym
+      transitions-map (into #{ [stateS (get gensym-map (str (first (seq word))) \a) (first (seq word))] }
+                      (for [v (partition 2 1 (vals gensym-map))]
+                           [(first v) (second v) (get states-char-map (second v))]))]
+    (make-NFA (into #{} )
+              states-map
+              stateS
+              accept-states-map
+              (make-transition-NFA transitions-map))))
 
 (def integer-literal-nfa
   (let [stateS (gensym :S)
@@ -80,882 +95,65 @@
                                   [state3 state11 \=]
                                   [state4 state11 \+]
                                   [state5 state11 \-]
-                                  [state6 state7 \>] ;; >>
-                                  [state6 state11 \=] ;; >>=
-                                  [state7 state11 \=] ;; >>>
-                                  ]))))
+                                  [state6 state7 \>]
+                                  [state6 state11 \=]
+                                  [state7 state11 \=]]))))
 
-;; Keywords
-;; From page 46 of jls2.pdf
-(def abstract-nfa
-  (let [stateS    (gensym :S)
-        a         (gensym :a)
-        ab        (gensym :ab)
-        abs       (gensym :abs)
-        abst      (gensym :abst)
-        abstr     (gensym :abstr)
-        abstra    (gensym :abstra)
-        abstrac   (gensym :abstrac)
-        abstract  (gensym :abstract)]
-  (make-NFA (into #{} )
-            #{stateS a ab abs abst abstr abstra abstrac abstract}
-            stateS
-            {abstract (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     a        \a]
-                                  [a          ab       \b]
-                                  [ab         abs      \s]
-                                  [abs        abst     \t]
-                                  [abst       abstr    \r]
-                                  [abstr      abstra   \a]
-                                  [abstra     abstrac  \c]
-                                  [abstrac    abstract \t]]))))
+(def abstract-nfa (string-to-nfa "abstract" :KEYWORD))
+(def default-nfa (string-to-nfa "default" :KEYWORD))
+(def if-nfa (string-to-nfa "if" :KEYWORD))
+(def private-nfa (string-to-nfa "private" :KEYWORD))
+(def this-nfa (string-to-nfa "this" :KEYWORD))
+(def boolean-nfa (string-to-nfa "boolean" :KEYWORD))
+(def do-nfa (string-to-nfa "do" :KEYWORD))
+(def implements-nfa (string-to-nfa "implements" :KEYWORD))
+(def protected-nfa (string-to-nfa "protected" :KEYWORD))
+(def break-nfa (string-to-nfa "break" :KEYWORD))
+(def double-nfa (string-to-nfa "double" :KEYWORD))
+(def import-nfa (string-to-nfa "import" :KEYWORD))
+(def public-nfa (string-to-nfa "public" :KEYWORD))
+(def throws-nfa (string-to-nfa "throws" :KEYWORD))
+(def throw-nfa (string-to-nfa "throw" :KEYWORD))
+(def byte-nfa (string-to-nfa "byte" :KEYWORD))
+(def else-nfa (string-to-nfa "else" :KEYWORD))
+(def instanceof-nfa (string-to-nfa "instanceof" :KEYWORD))
+(def return-nfa (string-to-nfa "return" :KEYWORD))
+(def transient-nfa (string-to-nfa "transient" :KEYWORD))
+(def case-nfa (string-to-nfa "case" :KEYWORD))
+(def extends-nfa (string-to-nfa "extends" :KEYWORD))
+(def int-nfa (string-to-nfa "int" :KEYWORD))
+(def short-nfa (string-to-nfa "short" :KEYWORD))
+(def try-nfa (string-to-nfa "try" :KEYWORD))
+(def catch-nfa (string-to-nfa "catch" :KEYWORD))
+(def interface-nfa (string-to-nfa "interface" :KEYWORD))
+(def static-nfa (string-to-nfa "static" :KEYWORD))
+(def void-nfa (string-to-nfa "void" :KEYWORD))
+(def char-nfa (string-to-nfa "char" :KEYWORD))
+(def finally-nfa (string-to-nfa "finally" :KEYWORD))
+(def final-nfa (string-to-nfa "final" :KEYWORD))
+(def long-nfa (string-to-nfa "long" :KEYWORD))
+(def strictfp-nfa (string-to-nfa "strictfp" :KEYWORD))
+(def volatile-nfa (string-to-nfa "volatile" :KEYWORD))
+(def class-nfa (string-to-nfa "class" :KEYWORD))
+(def float-nfa (string-to-nfa "float" :KEYWORD))
+(def native-nfa (string-to-nfa "native" :KEYWORD))
+(def super-nfa (string-to-nfa "super" :KEYWORD))
+(def while-nfa (string-to-nfa "while" :KEYWORD))
+(def const-nfa (string-to-nfa "const" :KEYWORD))
+(def for-nfa (string-to-nfa "for" :KEYWORD))
+(def new-nfa (string-to-nfa "new" :KEYWORD))
+(def switch-nfa (string-to-nfa "switch" :KEYWORD))
+(def continue-nfa (string-to-nfa "continue" :KEYWORD))
+(def goto-nfa (string-to-nfa "goto" :KEYWORD))
+(def package-nfa (string-to-nfa "package" :KEYWORD))
+(def synchronized-nfa (string-to-nfa "synchronized" :KEYWORD))
 
-(def default-nfa
-  (let [stateS    (gensym :S)
-        d         (gensym :d)
-        de        (gensym :de)
-        def       (gensym :def)
-        defa      (gensym :defa)
-        defau     (gensym :defau)
-        defaul    (gensym :defaul)
-        default   (gensym :default)]
-  (make-NFA (into #{} )
-            #{stateS d de def defa defau defaul default}
-            stateS
-            {default (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     d        \d]
-                                  [d          de       \e]
-                                  [de         def      \f]
-                                  [def        defa     \a]
-                                  [defa       defau    \u]
-                                  [defau      defaul   \l]
-                                  [defaul     default  \t]]))))
-
-(def if-nfa
-  (let [stateS   (gensym :S)
-        i        (gensym :i)
-        if       (gensym :if)]
-  (make-NFA (into #{} )
-            #{stateS i if}
-            stateS
-            {if (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS i  \i]
-                                  [i      if \f]]))))
-
-(def private-nfa
-  (let [stateS    (gensym :S)
-        p         (gensym :p)
-        pr        (gensym :pr)
-        pri       (gensym :pri)
-        priv      (gensym :priv)
-        priva     (gensym :priva)
-        privat    (gensym :privat)
-        private   (gensym :private)]
-  (make-NFA (into #{} )
-            #{stateS p pr pri priv priva privat private}
-            stateS
-            {private (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     p        \p]
-                                  [p          pr       \r]
-                                  [pr         pri      \i]
-                                  [pri        priv     \v]
-                                  [priv       priva    \a]
-                                  [priva      privat   \t]
-                                  [privat     private  \e]]))))
-
-(def this-nfa
-  (let [stateS   (gensym :S)
-        t        (gensym :t)
-        th       (gensym :th)
-        thi      (gensym :thi)
-        this     (gensym :this)]
-  (make-NFA (into #{} )
-            #{stateS t th thi this}
-            stateS
-            {this (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  t    \t]
-                                  [t       th   \h]
-                                  [th      thi  \i]
-                                  [thi     this \s]]))))
-
-(def boolean-nfa
-  (let [stateS    (gensym :S)
-        b         (gensym :b)
-        bo        (gensym :bo)
-        boo       (gensym :boo)
-        bool      (gensym :bool)
-        boole     (gensym :boole)
-        boolea    (gensym :boolea)
-        boolean   (gensym :boolean)]
-  (make-NFA (into #{} )
-            #{stateS b bo boo bool boole boolea boolean}
-            stateS
-            {boolean (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     b        \b]
-                                  [b          bo       \o]
-                                  [bo         boo      \o]
-                                  [boo        bool     \l]
-                                  [bool       boole    \e]
-                                  [boole      boolea   \a]
-                                  [boolea     boolean  \n]]))))
-
-(def do-nfa
-  (let [stateS   (gensym :S)
-        d        (gensym :d)
-        do       (gensym :do)]
-  (make-NFA (into #{} )
-            #{stateS d do}
-            stateS
-            {do (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS d  \d]
-                                  [d      do \o]]))))
-
-(def implements-nfa
-  (let [stateS      (gensym :S)
-        i           (gensym :i)
-        im          (gensym :im)
-        imp         (gensym :imp)
-        impl        (gensym :impl)
-        imple       (gensym :imple)
-        implem      (gensym :implem)
-        impleme     (gensym :impleme)
-        implemen    (gensym :implemen)
-        implement   (gensym :implement)
-        implements  (gensym :implements)]
-  (make-NFA (into #{} )
-            #{stateS i im imp impl imple implem impleme implemen implement implements}
-            stateS
-            {implements (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS       i          \i]
-                                  [i            im         \m]
-                                  [im           imp        \p]
-                                  [imp          impl       \l]
-                                  [impl         imple      \e]
-                                  [imple        implem     \m]
-                                  [implem       impleme    \e]
-                                  [impleme      implemen   \n]
-                                  [implemen     implement  \t]
-                                  [implement    implements \s]]))))
-
-(def protected-nfa
-  (let [stateS      (gensym :S)
-        p           (gensym :p)
-        pr          (gensym :pr)
-        pro         (gensym :pro)
-        prot        (gensym :prot)
-        prote       (gensym :prote)
-        protec      (gensym :protec)
-        protect     (gensym :protect)
-        protecte    (gensym :protecte)
-        protected   (gensym :protected)]
-  (make-NFA (into #{} )
-            #{stateS p pr pro prot prote protec protect protecte protected}
-            stateS
-            {protected (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS       p          \p]
-                                  [p            pr         \r]
-                                  [pr           pro        \o]
-                                  [pro          prot       \t]
-                                  [prot         prote      \e]
-                                  [prote        protec     \c]
-                                  [protec       protect    \t]
-                                  [protect      protecte   \e]
-                                  [protecte     protected  \d]]))))
-
-;; throw and throws
-(def throws-nfa
-  (let [stateS    (gensym :S)
-        t         (gensym :t)
-        th        (gensym :th)
-        thr       (gensym :thr)
-        thro      (gensym :thro)
-        throw     (gensym :throw)
-        throws    (gensym :throws)]
-  (make-NFA (into #{} )
-            #{stateS t th thr thro throw throws}
-            stateS
-            {throws (list :KEYWORD 0)
-             throw  (list :KEYWORD 1)}
-            (make-transition-NFA [[stateS     t        \t]
-                                  [t          th       \h]
-                                  [th         thr      \r]
-                                  [thr        thro     \o]
-                                  [thro       throw    \w]
-                                  [throw      throws   \s]]))))
-
-(def break-nfa
-  (let [stateS    (gensym :S)
-        b         (gensym :b)
-        br        (gensym :br)
-        bre       (gensym :bre)
-        brea      (gensym :brea)
-        break     (gensym :break)]
-  (make-NFA (into #{} )
-            #{stateS b br bre brea break}
-            stateS
-            {break (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     b        \b]
-                                  [b          br       \r]
-                                  [br         bre      \e]
-                                  [bre        brea     \a]
-                                  [brea       break    \k]]))))
-
-(def double-nfa
-  (let [stateS    (gensym :S)
-        d         (gensym :d)
-        do        (gensym :do)
-        dou       (gensym :dou)
-        doub      (gensym :doub)
-        doubl     (gensym :doubl)
-        double    (gensym :double)]
-  (make-NFA (into #{} )
-            #{stateS d do dou doub doubl double}
-            stateS
-            {double (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     d        \d]
-                                  [d          do       \o]
-                                  [do         dou      \u]
-                                  [dou        doub     \b]
-                                  [doub       doubl    \l]
-                                  [doubl      double   \e]]))))
-
-(def import-nfa
-  (let [stateS    (gensym :S)
-        i         (gensym :i)
-        im        (gensym :im)
-        imp       (gensym :imp)
-        impo      (gensym :impo)
-        impor     (gensym :impor)
-        import    (gensym :import)]
-  (make-NFA (into #{} )
-            #{stateS i im imp impo impor import}
-            stateS
-            {import (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     i        \i]
-                                  [i          im       \m]
-                                  [im         imp      \p]
-                                  [imp        impo     \o]
-                                  [impo       impor    \r]
-                                  [impor      import   \t]]))))
-
-(def public-nfa
-  (let [stateS    (gensym :S)
-        p         (gensym :p)
-        pu        (gensym :pu)
-        pub       (gensym :pub)
-        publ      (gensym :publ)
-        publi     (gensym :publi)
-        public    (gensym :public)]
-  (make-NFA (into #{} )
-            #{stateS p pu pub publ publi public}
-            stateS
-            {public (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     p        \p]
-                                  [p          pu       \u]
-                                  [pu         pub      \b]
-                                  [pub        publ     \l]
-                                  [publ       publi    \i]
-                                  [publi      public   \c]]))))
-
-(def byte-nfa
-  (let [stateS   (gensym :S)
-        b        (gensym :b)
-        by       (gensym :by)
-        byt      (gensym :byt)
-        byte     (gensym :byte)]
-  (make-NFA (into #{} )
-            #{stateS b by byt byte}
-            stateS
-            {byte (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  b    \b]
-                                  [b       by   \y]
-                                  [by      byt  \t]
-                                  [byt     byte \e]]))))
-
-(def else-nfa
-  (let [stateS   (gensym :S)
-        e        (gensym :e)
-        el       (gensym :el)
-        els      (gensym :els)
-        else     (gensym :else)]
-  (make-NFA (into #{} )
-            #{stateS e el els else}
-            stateS
-            {else (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  e    \e]
-                                  [e       el   \l]
-                                  [el      els  \s]
-                                  [els     else \e]]))))
-
-(def instanceof-nfa
-  (let [stateS      (gensym :S)
-        i           (gensym :i)
-        in          (gensym :in)
-        ins         (gensym :ins)
-        inst        (gensym :inst)
-        insta       (gensym :insta)
-        instan      (gensym :instan)
-        instanc     (gensym :instanc)
-        instance    (gensym :instance)
-        instanceo   (gensym :instanceo)
-        instanceof  (gensym :instanceof)]
-  (make-NFA (into #{} )
-            #{stateS i in ins inst insta instan instanc instance instanceo instanceof}
-            stateS
-            {instanceof (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS       i          \i]
-                                  [i            in         \n]
-                                  [in           ins        \s]
-                                  [ins          inst       \t]
-                                  [inst         insta      \a]
-                                  [insta        instan     \n]
-                                  [instan       instanc    \c]
-                                  [instanc      instance   \e]
-                                  [instance     instanceo  \o]
-                                  [instanceo    instanceof \f]]))))
-
-(def return-nfa
-  (let [stateS    (gensym :S)
-        r         (gensym :r)
-        re        (gensym :re)
-        ret       (gensym :ret)
-        retu      (gensym :retu)
-        retur     (gensym :retur)
-        return    (gensym :return)]
-  (make-NFA (into #{} )
-            #{stateS r re ret retu retur return}
-            stateS
-            {return (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     r        \r]
-                                  [r          re       \e]
-                                  [re         ret      \t]
-                                  [ret        retu     \u]
-                                  [retu       retur    \r]
-                                  [retur      return   \n]]))))
-
-(def transient-nfa
-  (let [stateS      (gensym :S)
-        t           (gensym :t)
-        tr          (gensym :tr)
-        tra         (gensym :tra)
-        tran        (gensym :tran)
-        trans       (gensym :trans)
-        transi      (gensym :transi)
-        transie     (gensym :transie)
-        transien    (gensym :transien)
-        transient   (gensym :transient)]
-  (make-NFA (into #{} )
-            #{stateS t tr tra tran trans transi transie transien transient}
-            stateS
-            {transient (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS       t          \t]
-                                  [t            tr         \r]
-                                  [tr           tra        \a]
-                                  [tra          tran       \n]
-                                  [tran         trans      \s]
-                                  [trans        transi     \i]
-                                  [transi       transie    \e]
-                                  [transie      transien   \n]
-                                  [transien     transient  \t]]))))
-
-(def case-nfa
-  (let [stateS   (gensym :S)
-        c        (gensym :c)
-        ca       (gensym :ca)
-        cas      (gensym :cas)
-        case     (gensym :case)]
-  (make-NFA (into #{} )
-            #{stateS c ca cas case}
-            stateS
-            {case (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  c    \c]
-                                  [c       ca   \a]
-                                  [ca      cas  \s]
-                                  [cas     case \e]]))))
-
-(def extends-nfa
-  (let [stateS    (gensym :S)
-        e         (gensym :e)
-        ex        (gensym :ex)
-        ext       (gensym :ext)
-        exte      (gensym :exte)
-        exten     (gensym :exten)
-        extend    (gensym :extend)
-        extends   (gensym :extends)]
-  (make-NFA (into #{} )
-            #{stateS e ex ext exte exten extend extends}
-            stateS
-            {extends (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     e        \e]
-                                  [e          ex       \x]
-                                  [ex         ext      \t]
-                                  [ext        exte     \e]
-                                  [exte       exten    \n]
-                                  [exten      extend   \d]
-                                  [extend     extends  \s]]))))
-
-(def int-nfa
-  (let [stateS   (gensym :S)
-        i        (gensym :i)
-        in       (gensym :in)
-        int      (gensym :int)]
-  (make-NFA (into #{} )
-            #{stateS i in int}
-            stateS
-            {int (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  i   \i]
-                                  [i       in  \n]
-                                  [in      int \t]]))))
-
-(def short-nfa
-  (let [stateS    (gensym :S)
-        s         (gensym :s)
-        sh        (gensym :sh)
-        sho       (gensym :sho)
-        shor      (gensym :shor)
-        short     (gensym :short)]
-  (make-NFA (into #{} )
-            #{stateS s sh sho shor short}
-            stateS
-            {short (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     s        \s]
-                                  [s          sh       \h]
-                                  [sh         sho      \o]
-                                  [sho        shor     \r]
-                                  [shor       short    \t]]))))
-
-(def try-nfa
-  (let [stateS   (gensym :S)
-        t        (gensym :t)
-        tr       (gensym :tr)
-        try      (gensym :try)]
-  (make-NFA (into #{} )
-            #{stateS t tr try}
-            stateS
-            {try (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  t   \t]
-                                  [t       tr  \r]
-                                  [tr      try \y]]))))
-
-(def catch-nfa
-  (let [stateS    (gensym :S)
-        c         (gensym :c)
-        ca        (gensym :ca)
-        cat       (gensym :cat)
-        catc      (gensym :catc)
-        catch     (gensym :catch)]
-  (make-NFA (into #{} )
-            #{stateS c ca cat catc catch}
-            stateS
-            {catch (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     c        \c]
-                                  [c          ca       \a]
-                                  [ca         cat      \t]
-                                  [cat        catc     \c]
-                                  [catc       catch    \h]]))))
-
-;; final and finally
-(def finally-nfa
-  (let [stateS    (gensym :S)
-        f         (gensym :f)
-        fi        (gensym :fi)
-        fin       (gensym :fin)
-        fina      (gensym :fina)
-        final     (gensym :final)
-        finall    (gensym :finall)
-        finally   (gensym :finally)]
-  (make-NFA (into #{} )
-            #{stateS f fi fin fina final finall finally}
-            stateS
-            {finally (list :KEYWORD 0)
-             final   (list :KEYWORD 1)}
-            (make-transition-NFA [[stateS     f        \f]
-                                  [f          fi       \i]
-                                  [fi         fin      \n]
-                                  [fin        fina     \a]
-                                  [fina       final    \l]
-                                  [final      finall   \l]
-                                  [finall     finally  \y]]))))
-
-(def interface-nfa
-  (let [stateS      (gensym :S)
-        i           (gensym :i)
-        in          (gensym :in)
-        int         (gensym :int)
-        inte        (gensym :inte)
-        inter       (gensym :inter)
-        interf      (gensym :interf)
-        interfa     (gensym :interfa)
-        interfac    (gensym :interfac)
-        interface   (gensym :interface)]
-  (make-NFA (into #{} )
-            #{stateS i in int inte inter interf interfa interfac interface}
-            stateS
-            {interface (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS       i          \i]
-                                  [i            in         \n]
-                                  [in           int        \t]
-                                  [int          inte       \e]
-                                  [inte         inter      \r]
-                                  [inter        interf     \f]
-                                  [interf       interfa    \a]
-                                  [interfa      interfac   \c]
-                                  [interfac     interface  \e]]))))
-
-(def static-nfa
-  (let [stateS    (gensym :S)
-        s         (gensym :s)
-        st        (gensym :st)
-        sta       (gensym :sta)
-        stat      (gensym :stat)
-        stati     (gensym :stati)
-        static    (gensym :static)]
-  (make-NFA (into #{} )
-            #{stateS static}
-            stateS
-            {static (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     s        \s]
-                                  [s          st       \t]
-                                  [st         sta      \a]
-                                  [sta        stat     \t]
-                                  [stat       stati    \i]
-                                  [stati      static   \c]]))))
-
-(def void-nfa
-  (let [stateS   (gensym :S)
-        v        (gensym :v)
-        vo       (gensym :vo)
-        voi      (gensym :voi)
-        void     (gensym :void)]
-  (make-NFA (into #{} )
-            #{stateS v vo voi void}
-            stateS
-            {void (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  v    \v]
-                                  [v       vo   \o]
-                                  [vo      voi  \i]
-                                  [voi     void \d]]))))
-
-(def char-nfa
-  (let [stateS   (gensym :S)
-        c        (gensym :c)
-        ch       (gensym :ch)
-        cha      (gensym :cha)
-        char     (gensym :char)]
-  (make-NFA (into #{} )
-            #{stateS c ch cha char}
-            stateS
-            {char (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  c    \c]
-                                  [c       ch   \h]
-                                  [ch      cha  \a]
-                                  [cha     char \r]]))))
-
-(def long-nfa
-  (let [stateS   (gensym :S)
-        l        (gensym :l)
-        lo       (gensym :lo)
-        lon      (gensym :lon)
-        long     (gensym :long)]
-  (make-NFA (into #{} )
-            #{stateS l lo lon long}
-            stateS
-            {long (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  l    \l]
-                                  [l       lo   \o]
-                                  [lo      lon  \n]
-                                  [lon     long \g]]))))
-
-(def strictfp-nfa
-  (let [stateS    (gensym :S)
-        s         (gensym :s)
-        st        (gensym :st)
-        str       (gensym :str)
-        stri      (gensym :stri)
-        stric     (gensym :stric)
-        strict    (gensym :strict)
-        strictf   (gensym :strictf)
-        strictfp  (gensym :strictfp)]
-  (make-NFA (into #{} )
-            #{stateS s st str stri stric strict strictf strictfp}
-            stateS
-            {strictfp (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     s        \s]
-                                  [s          st       \t]
-                                  [st         str      \r]
-                                  [str        stri     \i]
-                                  [stri       stric    \c]
-                                  [stric      strict   \t]
-                                  [strict     strictf  \f]
-                                  [strictf    strictfp \p]]))))
-
-(def volatile-nfa
-  (let [stateS    (gensym :S)
-        v         (gensym :v)
-        vo        (gensym :vo)
-        vol       (gensym :vol)
-        vola      (gensym :vola)
-        volat     (gensym :volat)
-        volati    (gensym :volati)
-        volatil   (gensym :volatil)
-        volatile  (gensym :volatile)]
-  (make-NFA (into #{} )
-            #{stateS v vo vol vola volat volati volatil volatile}
-            stateS
-            {volatile (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     v        \v]
-                                  [v          vo       \o]
-                                  [vo         vol      \l]
-                                  [vol        vola     \a]
-                                  [vola       volat    \t]
-                                  [volat      volati   \i]
-                                  [volati     volatil  \l]
-                                  [volatil    volatile \e]]))))
-
-(def class-nfa
-  (let [stateS    (gensym :S)
-        c         (gensym :c)
-        cl        (gensym :cl)
-        cla       (gensym :cla)
-        clas      (gensym :clas)
-        class     (gensym :class)]
-  (make-NFA (into #{} )
-            #{stateS c cl cla clas class}
-            stateS
-            {class (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     c        \c]
-                                  [c          cl       \l]
-                                  [cl         cla      \a]
-                                  [cla        clas     \s]
-                                  [clas       class    \s]]))))
-
-(def float-nfa
-  (let [stateS    (gensym :S)
-        f         (gensym :f)
-        fl        (gensym :fl)
-        flo       (gensym :flo)
-        floa      (gensym :floa)
-        float     (gensym :float)]
-  (make-NFA (into #{} )
-            #{stateS f fl flo floa float}
-            stateS
-            {float (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     f        \f]
-                                  [f          fl       \l]
-                                  [fl         flo      \o]
-                                  [flo        floa     \a]
-                                  [floa       float    \t]]))))
-
-(def native-nfa
-  (let [stateS    (gensym :S)
-        n         (gensym :n)
-        na        (gensym :na)
-        nat       (gensym :nat)
-        nati      (gensym :nati)
-        nativ     (gensym :nativ)
-        native    (gensym :native)]
-  (make-NFA (into #{} )
-            #{stateS n na nat nati nativ native}
-            stateS
-            {native (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     n        \n]
-                                  [n          na       \a]
-                                  [na         nat      \t]
-                                  [nat        nati     \i]
-                                  [nati       nativ    \v]
-                                  [nativ      native   \e]]))))
-
-(def super-nfa
-  (let [stateS    (gensym :S)
-        s         (gensym :s)
-        su        (gensym :su)
-        sup       (gensym :sup)
-        supe      (gensym :supe)
-        super     (gensym :super)]
-  (make-NFA (into #{} )
-            #{stateS s su sup supe super}
-            stateS
-            {super (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     s        \s]
-                                  [s          su       \u]
-                                  [su         sup      \p]
-                                  [sup        supe     \e]
-                                  [supe       super    \r]]))))
-
-(def while-nfa
-  (let [stateS    (gensym :S)
-        w         (gensym :w)
-        wh        (gensym :wh)
-        whi       (gensym :whi)
-        whil      (gensym :whil)
-        while     (gensym :while)]
-  (make-NFA (into #{} )
-            #{stateS w wh whi whil while}
-            stateS
-            {while (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     w        \w]
-                                  [w          wh       \h]
-                                  [wh         whi      \i]
-                                  [whi        whil     \l]
-                                  [whil       while    \e]]))))
-
-(def const-nfa
-  (let [stateS    (gensym :S)
-        c         (gensym :c)
-        co        (gensym :co)
-        con       (gensym :con)
-        cons      (gensym :cons)
-        const     (gensym :const)]
-  (make-NFA (into #{} )
-            #{stateS c co con cons const}
-            stateS
-            {const (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     c        \c]
-                                  [c          co       \o]
-                                  [co         con      \n]
-                                  [con        cons     \s]
-                                  [cons       const    \t]]))))
-
-(def for-nfa
-  (let [stateS   (gensym :S)
-        f        (gensym :f)
-        fo       (gensym :fo)
-        for      (gensym :for)]
-  (make-NFA (into #{} )
-            #{stateS f fo for}
-            stateS
-            {for (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  f   \f]
-                                  [f       fo  \o]
-                                  [fo      for \r]]))))
-
-(def new-nfa
-  (let [stateS   (gensym :S)
-        n        (gensym :n)
-        ne       (gensym :ne)
-        new      (gensym :new)]
-  (make-NFA (into #{} )
-            #{stateS n ne new}
-            stateS
-            {new (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  n   \n]
-                                  [n       ne  \e]
-                                  [ne      new \w]]))))
-
-(def switch-nfa
-  (let [stateS    (gensym :S)
-        s         (gensym :s)
-        sw        (gensym :sw)
-        swi       (gensym :swi)
-        swit      (gensym :swit)
-        switc     (gensym :switc)
-        switch    (gensym :switch)]
-  (make-NFA (into #{} )
-            #{stateS s sw swi swit switc switch}
-            stateS
-            {switch (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     s        \s]
-                                  [s          sw       \w]
-                                  [sw         swi      \i]
-                                  [swi        swit     \t]
-                                  [swit       switc    \c]
-                                  [switc      switch   \h]]))))
-
-(def continue-nfa
-  (let [stateS    (gensym :S)
-        c         (gensym :c)
-        co        (gensym :co)
-        con       (gensym :con)
-        cont      (gensym :cont)
-        conti     (gensym :conti)
-        contin    (gensym :contin)
-        continu   (gensym :continu)
-        continue  (gensym :continue)]
-  (make-NFA (into #{} )
-            #{stateS c co con cont conti contin continu continue}
-            stateS
-            {continue (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     c        \c]
-                                  [c          co       \o]
-                                  [co         con      \n]
-                                  [con        cont     \t]
-                                  [cont       conti    \i]
-                                  [conti      contin   \n]
-                                  [contin     continu  \u]
-                                  [continu    continue \e]]))))
-
-(def goto-nfa
-  (let [stateS   (gensym :S)
-        g        (gensym :g)
-        go       (gensym :go)
-        got      (gensym :got)
-        goto     (gensym :goto)]
-  (make-NFA (into #{} )
-            #{stateS g go got goto}
-            stateS
-            {goto (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS  g    \g]
-                                  [g       go   \o]
-                                  [go      got  \t]
-                                  [got     goto \o]]))))
-
-(def package-nfa
-  (let [stateS    (gensym :S)
-        p         (gensym :p)
-        pa        (gensym :pa)
-        pac       (gensym :pac)
-        pack      (gensym :pack)
-        packa     (gensym :packa)
-        packag    (gensym :packag)
-        package   (gensym :package)]
-  (make-NFA (into #{} )
-            #{stateS p pa pac pack packa packag package}
-            stateS
-            {package (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS     p        \p]
-                                  [p          pa       \a]
-                                  [pa         pac      \c]
-                                  [pac        pack     \k]
-                                  [pack       packa    \a]
-                                  [packa      packag   \g]
-                                  [packag     package  \e]]))))
-
-(def synchronized-nfa
-  (let [stateS        (gensym :S)
-        s             (gensym :s)
-        sy            (gensym :sy)
-        syn           (gensym :syn)
-        sync          (gensym :sync)
-        synch         (gensym :synch)
-        synchr        (gensym :synchr)
-        synchro       (gensym :synchro)
-        synchron      (gensym :synchron)
-        synchroni     (gensym :synchroni)
-        synchroniz    (gensym :synchroniz)
-        synchronize   (gensym :synchronize)
-        synchronized  (gensym :synchronized)]
-  (make-NFA (into #{} )
-            #{stateS s sy syn sync synch synchr synchro synchron synchroni synchroniz synchronize synchronized}
-            stateS
-            {synchronized (list :KEYWORD 0)}
-            (make-transition-NFA [[stateS         s            \s]
-                                  [s              sy           \y]
-                                  [sy             syn          \n]
-                                  [syn            sync         \c]
-                                  [sync           synch        \h]
-                                  [synch          synchr       \r]
-                                  [synchr         synchro      \o]
-                                  [synchro        synchron     \n]
-                                  [synchron       synchroni    \i]
-                                  [synchroni      synchroniz   \z]
-                                  [synchroniz     synchronize  \e]
-                                  [synchronize    synchronized \d]]))))
-
+;; Keywords nfa
 (def keywords-nfa
   (let [stateS (gensym :S)]
   ;; use default constructor because we no longer have the merged accept-map
   (->NFA (into #{} )
-         (merge-nfas-states
+         (union
            abstract-nfa
            default-nfa
            if-nfa
@@ -970,6 +168,7 @@
            import-nfa
            public-nfa
            throws-nfa
+           throw-nfa
            byte-nfa
            else-nfa
            instanceof-nfa
@@ -986,6 +185,7 @@
            void-nfa
            char-nfa
            finally-nfa
+           final-nfa
            long-nfa
            strictfp-nfa
            volatile-nfa
@@ -1003,7 +203,7 @@
            package-nfa
            synchronized-nfa)
          stateS
-         (merge-nfas
+         (merge
            (:accept-states abstract-nfa)
            (:accept-states default-nfa)
            (:accept-states if-nfa)
@@ -1018,6 +218,7 @@
            (:accept-states import-nfa)
            (:accept-states public-nfa)
            (:accept-states throws-nfa)
+           (:accept-states throw-nfa)
            (:accept-states byte-nfa)
            (:accept-states else-nfa)
            (:accept-states instanceof-nfa)
@@ -1034,6 +235,7 @@
            (:accept-states void-nfa)
            (:accept-states char-nfa)
            (:accept-states finally-nfa)
+           (:accept-states final-nfa)
            (:accept-states long-nfa)
            (:accept-states strictfp-nfa)
            (:accept-states volatile-nfa)
@@ -1050,7 +252,7 @@
            (:accept-states goto-nfa)
            (:accept-states package-nfa)
            (:accept-states synchronized-nfa))
-         (merge-nfas
+         (merge
            (:transitions abstract-nfa)
            (:transitions default-nfa)
            (:transitions if-nfa)
@@ -1065,6 +267,7 @@
            (:transitions import-nfa)
            (:transitions public-nfa)
            (:transitions throws-nfa)
+           (:transitions throw-nfa)
            (:transitions byte-nfa)
            (:transitions else-nfa)
            (:transitions instanceof-nfa)
@@ -1081,6 +284,7 @@
            (:transitions void-nfa)
            (:transitions char-nfa)
            (:transitions finally-nfa)
+           (:transitions final-nfa)
            (:transitions long-nfa)
            (:transitions strictfp-nfa)
            (:transitions volatile-nfa)
@@ -1111,6 +315,7 @@
                                  [stateS (:start import-nfa) e]
                                  [stateS (:start public-nfa) e]
                                  [stateS (:start throws-nfa) e]
+                                 [stateS (:start throw-nfa) e]
                                  [stateS (:start byte-nfa) e]
                                  [stateS (:start else-nfa) e]
                                  [stateS (:start instanceof-nfa) e]
@@ -1127,6 +332,7 @@
                                  [stateS (:start void-nfa) e]
                                  [stateS (:start char-nfa) e]
                                  [stateS (:start finally-nfa) e]
+                                 [stateS (:start final-nfa) e]
                                  [stateS (:start long-nfa) e]
                                  [stateS (:start strictfp-nfa) e]
                                  [stateS (:start volatile-nfa) e]
@@ -1143,7 +349,7 @@
                                  [stateS (:start goto-nfa) e]
                                  [stateS (:start package-nfa) e]
                                  [stateS (:start synchronized-nfa) e]]))
-         (merge-nfas
+         (merge
            (:accept-priorities abstract-nfa)
            (:accept-priorities default-nfa)
            (:accept-priorities if-nfa)
@@ -1158,6 +364,7 @@
            (:accept-priorities import-nfa)
            (:accept-priorities public-nfa)
            (:accept-priorities throws-nfa)
+           (:accept-priorities throw-nfa)
            (:accept-priorities byte-nfa)
            (:accept-priorities else-nfa)
            (:accept-priorities instanceof-nfa)
@@ -1174,6 +381,7 @@
            (:accept-priorities void-nfa)
            (:accept-priorities char-nfa)
            (:accept-priorities finally-nfa)
+           (:accept-priorities final-nfa)
            (:accept-priorities long-nfa)
            (:accept-priorities strictfp-nfa)
            (:accept-priorities volatile-nfa)
@@ -1190,12 +398,6 @@
            (:accept-priorities goto-nfa)
            (:accept-priorities package-nfa)
            (:accept-priorities synchronized-nfa)))))
-
-;; java keywords
-;; https://www.student.cs.uwaterloo.ca/~cs444/joos.html
-
-;; operators, can get the string later on
-;; = assign, == EQ, <= LE, != NE
 
 ;; Booleans
 (def boolean-nfa
@@ -1224,8 +426,6 @@
                                   [statefal statefals \s]
                                   [statefals statefalse \e]]))))
 
-
-
 ;; complete nfa from all of the individual RE nfas
 ;; int-literal
 ;; operators
@@ -1235,21 +435,21 @@
   (let [stateS (gensym :S)]
   ;; use default constructor because we no longer have the merged accept-map
   (->NFA (into #{} )
-         (merge-nfas-states integer-literal-nfa operators-nfa boolean-nfa keywords-nfa)
+         (union integer-literal-nfa operators-nfa boolean-nfa keywords-nfa)
          stateS
-         (merge-nfas (:accept-states integer-literal-nfa)
+         (merge (:accept-states integer-literal-nfa)
                      (:accept-states operators-nfa)
                      (:accept-states boolean-nfa)
                      (:accept-states keywords-nfa))
-         (merge-nfas (:transitions integer-literal-nfa)
-                     (:transitions operators-nfa)
-                     (:transitions boolean-nfa)
-                     (:transitions keywords-nfa)
-                     (make-transition-NFA [[stateS (:start integer-literal-nfa) e]
-                                           [stateS (:start operators-nfa) e]
-                                           [stateS (:start boolean-nfa) e]
-                                           [stateS (:start keywords-nfa) e]]))
-         (merge-nfas (:accept-priorities integer-literal-nfa)
-                     (:accept-priorities operators-nfa)
-                     (:accept-priorities boolean-nfa)
-                     (:accept-priorities keywords-nfa)))))
+         (merge (:transitions integer-literal-nfa)
+                (:transitions operators-nfa)
+                (:transitions boolean-nfa)
+                (:transitions keywords-nfa)
+                (make-transition-NFA [[stateS (:start integer-literal-nfa) e]
+                                      [stateS (:start operators-nfa) e]
+                                      [stateS (:start boolean-nfa) e]
+                                      [stateS (:start keywords-nfa) e]]))
+         (merge (:accept-priorities integer-literal-nfa)
+                (:accept-priorities operators-nfa)
+                (:accept-priorities boolean-nfa)
+                (:accept-priorities keywords-nfa)))))

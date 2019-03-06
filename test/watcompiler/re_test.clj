@@ -4,12 +4,22 @@
             [watcompiler.re :refer :all])
   (:import [watcompiler.nfa NFA]))
 
+;; Function formed nfa tests
+(deftest function-test
+  (def int-nfa-test (string-to-nfa "int" :INT))
+    (is :MAP int-nfa-test)
+    (is (= :INT (run-NFA int-nfa-test "int")))
+  (def synchronized-nfa-test (string-to-nfa "synchronized" :KEYWORD))
+    (is :MAP synchronized-nfa-test)
+    (is (= :KEYWORD (run-NFA synchronized-nfa-test "synchronized")))
+    (is (= false (run-NFA synchronized-nfa-test "synchronize")))
+    (is (= false (run-NFA synchronized-nfa-test "ynchronize"))))
+
 ;; Individual NFA tests
 (deftest int-test
   (is (= :KEYWORD (run-NFA int-nfa "int")))
   (is (= :INTEGER (run-NFA integer-literal-nfa "109"))))
 
-;; Merged NFA test
 (deftest operator-test
   ;; Operators
   (is (= :OPERATOR (run-NFA operators-nfa "+")))
@@ -29,6 +39,7 @@
   (is (= :OPERATOR (run-NFA operators-nfa "!")))
   (is (= :OPERATOR (run-NFA operators-nfa "!="))))
 
+;; Booleans test
 (deftest boolean-test
   (is (= :BOOLEAN (run-NFA boolean-nfa "true")))
   (is (= :BOOLEAN (run-NFA boolean-nfa "false")))
@@ -40,10 +51,21 @@
   ;; Individual Keywords on their nfas
   (is (= :KEYWORD (run-NFA int-nfa "int")))
   (is (= :KEYWORD (run-NFA abstract-nfa "abstract")))
-  (is (= :KEYWORD (run-NFA default-nfa "default"))))
+  (is (= :KEYWORD (run-NFA default-nfa "default")))
+  (is (= false (run-NFA synchronized-nfa-test "synchronize")))
+  (is (= false (run-NFA synchronized-nfa-test "ynchronize"))))
 
-(deftest all-test
-  ;; All Test
+;; Test merging nfas from function
+(deftest merged-function-nfa-test
+  (is :MAP complete-nfa)
+  (is (= :KEYWORD (run-NFA complete-nfa "int")))
+  (is (= :KEYWORD (run-NFA complete-nfa "synchronized")))
+  (is (= :INTEGER (run-NFA complete-nfa "109")))
+  (is (= :OPERATOR (run-NFA complete-nfa "++")))
+  (is (= :BOOLEAN (run-NFA complete-nfa "true")))
+  (is (= :BOOLEAN (run-NFA complete-nfa "false"))))
+
+(deftest keywords-test
   (is (= :KEYWORD (run-NFA complete-nfa "abstract")))
   (is (= :KEYWORD (run-NFA complete-nfa "default")))
   (is (= :KEYWORD (run-NFA complete-nfa "if")))
