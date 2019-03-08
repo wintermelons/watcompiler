@@ -4,7 +4,16 @@
             [watcompiler.re :refer :all])
   (:import [watcompiler.nfa NFA]))
 
-;; Function formed nfa tests
+;; Test forming multiple nfas from multiple strings
+(deftest multiple-nfas-function-test
+  (def full-nfa (form-multiple-nfas "int" "if"))
+  (is (= :KEYWORD (run-NFA full-nfa "int")))
+  (is (= :KEYWORD (run-NFA full-nfa "if")))
+  (is (= false (run-NFA full-nfa "in")))
+  (is (= false (run-NFA full-nfa "nt"))))
+
+
+;; Test function forming individual nfa
 (deftest function-test
   (def int-nfa-test (string-to-nfa "int" :INT))
     (is :MAP int-nfa-test)
@@ -17,6 +26,7 @@
 
 ;; Individual NFA tests
 (deftest int-test
+  (def int-nfa (string-to-nfa "int" :KEYWORD))
   (is (= :KEYWORD (run-NFA int-nfa "int")))
   (is (= :INTEGER (run-NFA integer-literal-nfa "109"))))
 
@@ -49,13 +59,17 @@
 ;; Keyword test
 (deftest keyword-test
   ;; Individual Keywords on their nfas
+  (def int-nfa (string-to-nfa "int" :KEYWORD))
+  (def abstract-nfa (string-to-nfa "abstract" :KEYWORD))
+  (def default-nfa (string-to-nfa "default" :KEYWORD))
+  (def synchronize-nfa (string-to-nfa "synchronize" :KEYWORD))
   (is (= :KEYWORD (run-NFA int-nfa "int")))
   (is (= :KEYWORD (run-NFA abstract-nfa "abstract")))
   (is (= :KEYWORD (run-NFA default-nfa "default")))
   (is (= false (run-NFA synchronized-nfa-test "synchronize")))
   (is (= false (run-NFA synchronized-nfa-test "ynchronize"))))
 
-;; Test merging nfas from function
+;; Test on a complete merged nfa
 (deftest merged-function-nfa-test
   (is :MAP complete-nfa)
   (is (= :KEYWORD (run-NFA complete-nfa "int")))

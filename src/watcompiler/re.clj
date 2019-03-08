@@ -4,28 +4,44 @@
             [watcompiler.lang :refer :all])
   (:import [watcompiler.nfa NFA]))
 
-;; Helpers for merging nfas
+;; Merging multiple nfas
 (defn merge-nfas
-  [& args]
-  (apply merge args))
+  [& nfas]
+  (let
+    [stateS (gensym :s)
+     all-states (apply union (map :states nfas))
+     all-accept-states (apply union (map :accept-states nfas))
+     merged-transitions (apply merge (map :transitions nfas))
+     all-transitions (merge
+                       ;; Merged transitions from the nfas
+                       merged-transitions
+                       ;; Episilon transition to each nfa
+                       (make-transition-NFA (into []
+                                            (for [nfa-start (map :start nfas)]
+                                                 [stateS nfa-start e]))))
+     all-accept-priorities (apply union (map :accept-priorities nfas))]
+    (->NFA (into #{} )
+               all-states
+               stateS
+               all-accept-states
+               all-transitions
+               all-accept-priorities)))
 
-;; parse each string to form the nfa and then form complete nfa
-;; form the states in the nfa
+;; Parses a string to form the nfa
 (defn string-to-nfa
   [word wordtype]
   (let
     [stateS (gensym :s)
 
       ;; List of substrings of word, stored as strings
-      states-map (rest (reductions str (str) word))
+      states-map (set (rest (reductions str (str) word)))
 
       ;; Key: substring of word, Value: gensym associated with this state
       gensym-map (into (sorted-map) (for [c states-map]
                                          [c (gensym c)]))
       ;; Key: gensym value, Value: char to get to this state
-      states-char-map (into (sorted-map)
-                                        (for [pair (map list (vals gensym-map) (seq word))]
-                                             [(first pair) (second pair)]))
+      states-char-map (into (sorted-map) (for [pair (map list (vals gensym-map) (seq word))]
+                                              [(first pair) (second pair)]))
 
       ;; Accept states
       accept-states-map {(get gensym-map word) (list wordtype 0)}
@@ -40,6 +56,36 @@
               accept-states-map
               (make-transition-NFA transitions-map))))
 
+
+;; Takes strings and forms nfas from them and links them into one nfa
+(defn form-multiple-nfas
+  [& args]
+  (let
+    [stateS (gensym :s)
+     ;; Key: string for keyword, Value: NFA for that keyword
+     strings-nfas (into (sorted-map) (for [nfa-name args]
+                                          [nfa-name (string-to-nfa nfa-name :KEYWORD)]))
+     all-states (apply union (map :states (vals strings-nfas)))
+     all-accept-states (apply union (map :accept-states (vals strings-nfas)))
+     merged-transitions (apply merge (map :transitions (vals strings-nfas)))
+     all-transitions (merge
+                       ;; Merged transitions from the nfas
+                       merged-transitions
+                       ;; Episilon transition to each nfa
+                       (make-transition-NFA (into []
+                                            (for [nfa-start (map :start (vals strings-nfas))]
+                                                 [stateS nfa-start e]))))
+     all-accept-priorities (apply union (map :accept-priorities (vals strings-nfas)))]
+    (->NFA (into #{} )
+               all-states
+               stateS
+               all-accept-states
+               all-transitions
+               all-accept-priorities)))
+
+;; NFAs for types
+
+;; Integer literal
 (def integer-literal-nfa
   (let [stateS (gensym :S)
         state1 (gensym :1)
@@ -99,305 +145,56 @@
                                   [state6 state11 \=]
                                   [state7 state11 \=]]))))
 
-(def abstract-nfa (string-to-nfa "abstract" :KEYWORD))
-(def default-nfa (string-to-nfa "default" :KEYWORD))
-(def if-nfa (string-to-nfa "if" :KEYWORD))
-(def private-nfa (string-to-nfa "private" :KEYWORD))
-(def this-nfa (string-to-nfa "this" :KEYWORD))
-(def boolean-nfa (string-to-nfa "boolean" :KEYWORD))
-(def do-nfa (string-to-nfa "do" :KEYWORD))
-(def implements-nfa (string-to-nfa "implements" :KEYWORD))
-(def protected-nfa (string-to-nfa "protected" :KEYWORD))
-(def break-nfa (string-to-nfa "break" :KEYWORD))
-(def double-nfa (string-to-nfa "double" :KEYWORD))
-(def import-nfa (string-to-nfa "import" :KEYWORD))
-(def public-nfa (string-to-nfa "public" :KEYWORD))
-(def throws-nfa (string-to-nfa "throws" :KEYWORD))
-(def throw-nfa (string-to-nfa "throw" :KEYWORD))
-(def byte-nfa (string-to-nfa "byte" :KEYWORD))
-(def else-nfa (string-to-nfa "else" :KEYWORD))
-(def instanceof-nfa (string-to-nfa "instanceof" :KEYWORD))
-(def return-nfa (string-to-nfa "return" :KEYWORD))
-(def transient-nfa (string-to-nfa "transient" :KEYWORD))
-(def case-nfa (string-to-nfa "case" :KEYWORD))
-(def extends-nfa (string-to-nfa "extends" :KEYWORD))
-(def int-nfa (string-to-nfa "int" :KEYWORD))
-(def short-nfa (string-to-nfa "short" :KEYWORD))
-(def try-nfa (string-to-nfa "try" :KEYWORD))
-(def catch-nfa (string-to-nfa "catch" :KEYWORD))
-(def interface-nfa (string-to-nfa "interface" :KEYWORD))
-(def static-nfa (string-to-nfa "static" :KEYWORD))
-(def void-nfa (string-to-nfa "void" :KEYWORD))
-(def char-nfa (string-to-nfa "char" :KEYWORD))
-(def finally-nfa (string-to-nfa "finally" :KEYWORD))
-(def final-nfa (string-to-nfa "final" :KEYWORD))
-(def long-nfa (string-to-nfa "long" :KEYWORD))
-(def strictfp-nfa (string-to-nfa "strictfp" :KEYWORD))
-(def volatile-nfa (string-to-nfa "volatile" :KEYWORD))
-(def class-nfa (string-to-nfa "class" :KEYWORD))
-(def float-nfa (string-to-nfa "float" :KEYWORD))
-(def native-nfa (string-to-nfa "native" :KEYWORD))
-(def super-nfa (string-to-nfa "super" :KEYWORD))
-(def while-nfa (string-to-nfa "while" :KEYWORD))
-(def const-nfa (string-to-nfa "const" :KEYWORD))
-(def for-nfa (string-to-nfa "for" :KEYWORD))
-(def new-nfa (string-to-nfa "new" :KEYWORD))
-(def switch-nfa (string-to-nfa "switch" :KEYWORD))
-(def continue-nfa (string-to-nfa "continue" :KEYWORD))
-(def goto-nfa (string-to-nfa "goto" :KEYWORD))
-(def package-nfa (string-to-nfa "package" :KEYWORD))
-(def synchronized-nfa (string-to-nfa "synchronized" :KEYWORD))
-
 ;; Keywords nfa
 (def keywords-nfa
-  (let [stateS (gensym :S)]
-  ;; use default constructor because we no longer have the merged accept-map
-  (->NFA (into #{} )
-         (union
-           abstract-nfa
-           default-nfa
-           if-nfa
-           private-nfa
-           this-nfa
-           boolean-nfa
-           do-nfa
-           implements-nfa
-           protected-nfa
-           break-nfa
-           double-nfa
-           import-nfa
-           public-nfa
-           throws-nfa
-           throw-nfa
-           byte-nfa
-           else-nfa
-           instanceof-nfa
-           return-nfa
-           transient-nfa
-           case-nfa
-           extends-nfa
-           int-nfa
-           short-nfa
-           try-nfa
-           catch-nfa
-           interface-nfa
-           static-nfa
-           void-nfa
-           char-nfa
-           finally-nfa
-           final-nfa
-           long-nfa
-           strictfp-nfa
-           volatile-nfa
-           class-nfa
-           float-nfa
-           native-nfa
-           super-nfa
-           while-nfa
-           const-nfa
-           for-nfa
-           new-nfa
-           switch-nfa
-           continue-nfa
-           goto-nfa
-           package-nfa
-           synchronized-nfa)
-         stateS
-         (merge
-           (:accept-states abstract-nfa)
-           (:accept-states default-nfa)
-           (:accept-states if-nfa)
-           (:accept-states private-nfa)
-           (:accept-states this-nfa)
-           (:accept-states boolean-nfa)
-           (:accept-states do-nfa)
-           (:accept-states implements-nfa)
-           (:accept-states protected-nfa)
-           (:accept-states break-nfa)
-           (:accept-states double-nfa)
-           (:accept-states import-nfa)
-           (:accept-states public-nfa)
-           (:accept-states throws-nfa)
-           (:accept-states throw-nfa)
-           (:accept-states byte-nfa)
-           (:accept-states else-nfa)
-           (:accept-states instanceof-nfa)
-           (:accept-states return-nfa)
-           (:accept-states transient-nfa)
-           (:accept-states case-nfa)
-           (:accept-states extends-nfa)
-           (:accept-states int-nfa)
-           (:accept-states short-nfa)
-           (:accept-states try-nfa)
-           (:accept-states catch-nfa)
-           (:accept-states interface-nfa)
-           (:accept-states static-nfa)
-           (:accept-states void-nfa)
-           (:accept-states char-nfa)
-           (:accept-states finally-nfa)
-           (:accept-states final-nfa)
-           (:accept-states long-nfa)
-           (:accept-states strictfp-nfa)
-           (:accept-states volatile-nfa)
-           (:accept-states class-nfa)
-           (:accept-states float-nfa)
-           (:accept-states native-nfa)
-           (:accept-states super-nfa)
-           (:accept-states while-nfa)
-           (:accept-states const-nfa)
-           (:accept-states for-nfa)
-           (:accept-states new-nfa)
-           (:accept-states switch-nfa)
-           (:accept-states continue-nfa)
-           (:accept-states goto-nfa)
-           (:accept-states package-nfa)
-           (:accept-states synchronized-nfa))
-         (merge
-           (:transitions abstract-nfa)
-           (:transitions default-nfa)
-           (:transitions if-nfa)
-           (:transitions private-nfa)
-           (:transitions this-nfa)
-           (:transitions boolean-nfa)
-           (:transitions do-nfa)
-           (:transitions implements-nfa)
-           (:transitions protected-nfa)
-           (:transitions break-nfa)
-           (:transitions double-nfa)
-           (:transitions import-nfa)
-           (:transitions public-nfa)
-           (:transitions throws-nfa)
-           (:transitions throw-nfa)
-           (:transitions byte-nfa)
-           (:transitions else-nfa)
-           (:transitions instanceof-nfa)
-           (:transitions return-nfa)
-           (:transitions transient-nfa)
-           (:transitions case-nfa)
-           (:transitions extends-nfa)
-           (:transitions int-nfa)
-           (:transitions short-nfa)
-           (:transitions try-nfa)
-           (:transitions catch-nfa)
-           (:transitions interface-nfa)
-           (:transitions static-nfa)
-           (:transitions void-nfa)
-           (:transitions char-nfa)
-           (:transitions finally-nfa)
-           (:transitions final-nfa)
-           (:transitions long-nfa)
-           (:transitions strictfp-nfa)
-           (:transitions volatile-nfa)
-           (:transitions class-nfa)
-           (:transitions float-nfa)
-           (:transitions native-nfa)
-           (:transitions super-nfa)
-           (:transitions while-nfa)
-           (:transitions const-nfa)
-           (:transitions for-nfa)
-           (:transitions new-nfa)
-           (:transitions switch-nfa)
-           (:transitions continue-nfa)
-           (:transitions goto-nfa)
-           (:transitions package-nfa)
-           (:transitions synchronized-nfa)
-           (make-transition-NFA [[stateS (:start abstract-nfa) e]
-                                 [stateS (:start default-nfa) e]
-                                 [stateS (:start if-nfa) e]
-                                 [stateS (:start private-nfa) e]
-                                 [stateS (:start this-nfa) e]
-                                 [stateS (:start boolean-nfa) e]
-                                 [stateS (:start do-nfa) e]
-                                 [stateS (:start implements-nfa) e]
-                                 [stateS (:start protected-nfa) e]
-                                 [stateS (:start break-nfa) e]
-                                 [stateS (:start double-nfa) e]
-                                 [stateS (:start import-nfa) e]
-                                 [stateS (:start public-nfa) e]
-                                 [stateS (:start throws-nfa) e]
-                                 [stateS (:start throw-nfa) e]
-                                 [stateS (:start byte-nfa) e]
-                                 [stateS (:start else-nfa) e]
-                                 [stateS (:start instanceof-nfa) e]
-                                 [stateS (:start return-nfa) e]
-                                 [stateS (:start transient-nfa) e]
-                                 [stateS (:start case-nfa) e]
-                                 [stateS (:start extends-nfa) e]
-                                 [stateS (:start int-nfa) e]
-                                 [stateS (:start short-nfa) e]
-                                 [stateS (:start try-nfa) e]
-                                 [stateS (:start catch-nfa) e]
-                                 [stateS (:start interface-nfa) e]
-                                 [stateS (:start static-nfa) e]
-                                 [stateS (:start void-nfa) e]
-                                 [stateS (:start char-nfa) e]
-                                 [stateS (:start finally-nfa) e]
-                                 [stateS (:start final-nfa) e]
-                                 [stateS (:start long-nfa) e]
-                                 [stateS (:start strictfp-nfa) e]
-                                 [stateS (:start volatile-nfa) e]
-                                 [stateS (:start class-nfa) e]
-                                 [stateS (:start float-nfa) e]
-                                 [stateS (:start native-nfa) e]
-                                 [stateS (:start super-nfa) e]
-                                 [stateS (:start while-nfa) e]
-                                 [stateS (:start const-nfa) e]
-                                 [stateS (:start for-nfa) e]
-                                 [stateS (:start new-nfa) e]
-                                 [stateS (:start switch-nfa) e]
-                                 [stateS (:start continue-nfa) e]
-                                 [stateS (:start goto-nfa) e]
-                                 [stateS (:start package-nfa) e]
-                                 [stateS (:start synchronized-nfa) e]]))
-         (merge
-           (:accept-priorities abstract-nfa)
-           (:accept-priorities default-nfa)
-           (:accept-priorities if-nfa)
-           (:accept-priorities private-nfa)
-           (:accept-priorities this-nfa)
-           (:accept-priorities boolean-nfa)
-           (:accept-priorities do-nfa)
-           (:accept-priorities implements-nfa)
-           (:accept-priorities protected-nfa)
-           (:accept-priorities break-nfa)
-           (:accept-priorities double-nfa)
-           (:accept-priorities import-nfa)
-           (:accept-priorities public-nfa)
-           (:accept-priorities throws-nfa)
-           (:accept-priorities throw-nfa)
-           (:accept-priorities byte-nfa)
-           (:accept-priorities else-nfa)
-           (:accept-priorities instanceof-nfa)
-           (:accept-priorities return-nfa)
-           (:accept-priorities transient-nfa)
-           (:accept-priorities case-nfa)
-           (:accept-priorities extends-nfa)
-           (:accept-priorities int-nfa)
-           (:accept-priorities short-nfa)
-           (:accept-priorities try-nfa)
-           (:accept-priorities catch-nfa)
-           (:accept-priorities interface-nfa)
-           (:accept-priorities static-nfa)
-           (:accept-priorities void-nfa)
-           (:accept-priorities char-nfa)
-           (:accept-priorities finally-nfa)
-           (:accept-priorities final-nfa)
-           (:accept-priorities long-nfa)
-           (:accept-priorities strictfp-nfa)
-           (:accept-priorities volatile-nfa)
-           (:accept-priorities class-nfa)
-           (:accept-priorities float-nfa)
-           (:accept-priorities native-nfa)
-           (:accept-priorities super-nfa)
-           (:accept-priorities while-nfa)
-           (:accept-priorities const-nfa)
-           (:accept-priorities for-nfa)
-           (:accept-priorities new-nfa)
-           (:accept-priorities switch-nfa)
-           (:accept-priorities continue-nfa)
-           (:accept-priorities goto-nfa)
-           (:accept-priorities package-nfa)
-           (:accept-priorities synchronized-nfa)))))
+  (form-multiple-nfas "abstract"
+                      "default"
+                      "if"
+                      "private"
+                      "this"
+                      "boolean"
+                      "do"
+                      "implements"
+                      "protected"
+                      "break"
+                      "double"
+                      "import"
+                      "public"
+                      "throws"
+                      "throw"
+                      "byte"
+                      "else"
+                      "instanceof"
+                      "return"
+                      "transient"
+                      "case"
+                      "extends"
+                      "int"
+                      "short"
+                      "try"
+                      "catch"
+                      "interface"
+                      "static"
+                      "void"
+                      "char"
+                      "finally"
+                      "final"
+                      "long"
+                      "strictfp"
+                      "volatile"
+                      "class"
+                      "float"
+                      "native"
+                      "super"
+                      "while"
+                      "const"
+                      "for"
+                      "new"
+                      "switch"
+                      "continue"
+                      "goto"
+                      "package"
+                      "synchronized"))
 
 ;; Booleans
 (def boolean-nfa
@@ -432,24 +229,4 @@
 ;; boolean
 ;; keywords
 (def complete-nfa
-  (let [stateS (gensym :S)]
-  ;; use default constructor because we no longer have the merged accept-map
-  (->NFA (into #{} )
-         (union integer-literal-nfa operators-nfa boolean-nfa keywords-nfa)
-         stateS
-         (merge (:accept-states integer-literal-nfa)
-                     (:accept-states operators-nfa)
-                     (:accept-states boolean-nfa)
-                     (:accept-states keywords-nfa))
-         (merge (:transitions integer-literal-nfa)
-                (:transitions operators-nfa)
-                (:transitions boolean-nfa)
-                (:transitions keywords-nfa)
-                (make-transition-NFA [[stateS (:start integer-literal-nfa) e]
-                                      [stateS (:start operators-nfa) e]
-                                      [stateS (:start boolean-nfa) e]
-                                      [stateS (:start keywords-nfa) e]]))
-         (merge (:accept-priorities integer-literal-nfa)
-                (:accept-priorities operators-nfa)
-                (:accept-priorities boolean-nfa)
-                (:accept-priorities keywords-nfa)))))
+  (merge-nfas integer-literal-nfa operators-nfa boolean-nfa keywords-nfa))
