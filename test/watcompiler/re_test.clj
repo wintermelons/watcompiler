@@ -6,7 +6,7 @@
 
 ;; Test forming multiple nfas from multiple strings
 (deftest multiple-nfas-function-test
-  (def full-nfa (form-multiple-nfas "int" "if"))
+  (def full-nfa (form-multiple-nfas :KEYWORD "int" "if"))
   (is (= :KEYWORD (run-NFA full-nfa "int")))
   (is (= :KEYWORD (run-NFA full-nfa "if")))
   (is (= false (run-NFA full-nfa "in")))
@@ -129,8 +129,8 @@
   ;; Booleans
   (is (= :BOOLEAN (run-NFA complete-nfa "true")))
   (is (= :BOOLEAN (run-NFA complete-nfa "false")))
-  (is (= false (run-NFA complete-nfa "tru")))
-  (is (= false (run-NFA complete-nfa "fals")))
+  (is (= :IDENTIFIER (run-NFA complete-nfa "tru")))
+  (is (= :IDENTIFIER (run-NFA complete-nfa "fals")))
   ;; Integer
   (is (= :INTEGER (run-NFA complete-nfa "109")))
   ;; Operators

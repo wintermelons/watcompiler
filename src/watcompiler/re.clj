@@ -59,12 +59,14 @@
 
 ;; Takes strings and forms nfas from them and links them into one nfa
 (defn form-multiple-nfas
-  [& args]
+  [& arguments]
   (let
     [stateS (gensym :s)
+     class (first arguments)
+     args (rest arguments)
      ;; Key: string for keyword, Value: NFA for that keyword
      strings-nfas (into (sorted-map) (for [nfa-name args]
-                                          [nfa-name (string-to-nfa nfa-name :KEYWORD)]))
+                                          [nfa-name (string-to-nfa nfa-name class)]))
      all-states (apply union (map :states (vals strings-nfas)))
      all-accept-states (apply union (map :accept-states (vals strings-nfas)))
      merged-transitions (apply merge (map :transitions (vals strings-nfas)))
@@ -86,6 +88,7 @@
 ;; NFAs for types
 
 ;; Integer literal
+;; 0 and [1-9][0-9]*
 (def integer-literal-nfa
   (let [stateS (gensym :S)
         state1 (gensym :1)
@@ -99,55 +102,14 @@
                                   [state2 state2 DIGITS]]))))
 ;; Operators
 (def operators-nfa
-  (let [stateS (gensym :S)
-        state1 (gensym :1) ;; valid, but can add =
-        state2 (gensym :2) ;; valid, but can add <, =
-        state3 (gensym :3) ;; valid but can add >, =
-        state4 (gensym :4) ;; valid, but can add +
-        state5 (gensym :5) ;; valid, but can add -
-        state6 (gensym :6) ;; valid, but can add >, =
-        state7 (gensym :7) ;; valid, but can add >, =
-        state11 (gensym :11)] ;; Nothing else can be added to it
-  (make-NFA (into #{} )
-            #{stateS state1 state2, state3, state4, state5, state6, state11}
-            stateS
-            {state11 (list :OPERATOR 0)
-             state1 (list :OPERATOR 1)
-             state2 (list :OPERATOR 2)
-             state3 (list :OPERATOR 3)
-             state4 (list :OPERATOR 4)
-             state5 (list :OPERATOR 5)
-             state6 (list :OPERATOR 6)
-             state7 (list :OPERATOR 7)}
-            (make-transition-NFA [[stateS state1 \=]
-                                  [stateS state2 \<]
-                                  [stateS state3 \>]
-                                  [stateS state1 \!]
-                                  [stateS state1 \:]
-                                  [stateS state1 \~]
-                                  [stateS state1 \?]
-                                  [stateS state1 \&]
-                                  [stateS state1 \|]
-                                  [stateS state1 \^]
-                                  [stateS state1 \%]
-                                  [stateS state4 \+]
-                                  [stateS state5 \-]
-                                  [stateS state1 \*]
-                                  [stateS state1 \/]
-
-                                  [state1 state11 \=]
-                                  [state2 state1 \<]
-                                  [state3 state6 \>]
-                                  [state3 state11 \=]
-                                  [state4 state11 \+]
-                                  [state5 state11 \-]
-                                  [state6 state7 \>]
-                                  [state6 state11 \=]
-                                  [state7 state11 \=]]))))
+  (form-multiple-nfas :OPERATOR ">" "<" "<<" ">>" ">>>" "<<<" ">>>=" ">>="
+                      ">=" "<=" "&" "&=" "=" "==" "!" "!=" "^=" "^" "+" "+="
+                      "++" "-" "-=" "--" "*" "*=" "/" "/=" "%" "%="))
 
 ;; Keywords nfa
 (def keywords-nfa
-  (form-multiple-nfas "abstract"
+  (form-multiple-nfas :KEYWORD
+                      "abstract"
                       "default"
                       "if"
                       "private"
@@ -198,35 +160,43 @@
 
 ;; Booleans
 (def boolean-nfa
+  (form-multiple-nfas :BOOLEAN "true" "false"))
+
+;; Brackets
+(def bracket-nfa
+  (form-multiple-nfas :BRACKET "{" "}" "(" ")" "[" "]"))
+
+
+;; Identifiers
+;; [a-zA-Z][a-zA-Z0-9]*
+(def identifier-nfa
   (let [stateS        (gensym :S)
-        statet        (gensym :t)
-        statetr       (gensym :tr)
-        statetru      (gensym :tru)
-        statetrue     (gensym :true)
-        statef        (gensym :f)
-        statefa       (gensym :fa)
-        statefal      (gensym :fal)
-        statefals     (gensym :fals)
-        statefalse    (gensym :false)]
+        state1        (gensym :s1)
+        state2        (gensym :s2)]
   (make-NFA (into #{} )
-            #{stateS statet statetr statetru statetrue statef statefa statefal statefals statefalse}
+            #{stateS state1 state2}
             stateS
-            {statetrue  (list :BOOLEAN 0)
-             statefalse (list :BOOLEAN 0)}
-            (make-transition-NFA [[stateS statet \t]
-                                  [statet statetr \r]
-                                  [statetr statetru \u]
-                                  [statetru statetrue \e]
-                                  [stateS statef \f]
-                                  [statef statefa \a]
-                                  [statefa statefal \l]
-                                  [statefal statefals \s]
-                                  [statefals statefalse \e]]))))
+            {state1  (list :IDENTIFIER 1)
+             state2  (list :IDENTIFIER 1)}
+            (make-transition-NFA [[stateS state1 UPPER-ALPHABET]
+                                  [stateS state1 LOWER-ALPHABET]
+                                  [state1 state2 UPPER-ALPHABET]
+                                  [state1 state2 LOWER-ALPHABET]
+                                  [state2 state2 UPPER-ALPHABET]
+                                  [state2 state2 LOWER-ALPHABET]
+                                  [state2 state2 DIGITS]]))))
 
 ;; complete nfa from all of the individual RE nfas
 ;; int-literal
 ;; operators
 ;; boolean
 ;; keywords
+;; brackets
+;; identifier
 (def complete-nfa
-  (merge-nfas integer-literal-nfa operators-nfa boolean-nfa keywords-nfa))
+  (merge-nfas integer-literal-nfa
+              operators-nfa
+              boolean-nfa
+              keywords-nfa
+              bracket-nfa
+              identifier-nfa))
