@@ -1,7 +1,8 @@
 (ns watcompiler.re
   (:require [clojure.set :refer :all]
             [watcompiler.nfa :refer :all]
-            [watcompiler.lang :refer :all])
+            [watcompiler.lang :refer :all]
+            [clojure.string :as str])
   (:import [watcompiler.nfa NFA]))
 
 ;; Merging multiple nfas
@@ -62,7 +63,7 @@
   [& arguments]
   (let
     [stateS (gensym :s)
-     class (first arguments)
+     class (keyword (first arguments)) ;; Conver to a keyword since it reads strings from a file
      args (rest arguments)
      ;; Key: string for keyword, Value: NFA for that keyword
      strings-nfas (into (sorted-map) (for [nfa-name args]
@@ -85,6 +86,24 @@
                all-transitions
                all-accept-priorities)))
 
+;; Reading the file
+(def readFile
+   (with-open [rdr (clojure.java.io/reader "src/watcompiler/Tokens.txt")]
+     (reduce conj [] (line-seq rdr))))
+
+;; Splitting the lines by space
+(def splitLines
+  (into []
+  (for [x readFile]
+       (str/split x #" "))))
+
+(def fileFormed-nfa
+  (let [nfas
+    (into []
+    (for [x splitLines]
+         (apply form-multiple-nfas x)))]
+    (apply merge-nfas nfas)))
+
 ;; NFAs for types
 
 ;; Integer literal
@@ -100,11 +119,47 @@
             (make-transition-NFA [[stateS state1 e]
                                   [state1 state2 DIGITS-NONZERO]
                                   [state2 state2 DIGITS]]))))
+
+;; String literal
+;; \".*\" (\ shown for escaping ")
+(def string-literal-nfa
+  (let [stateS (gensym :S)
+        state1 (gensym :1)
+        state2 (gensym :2)]
+  (make-NFA (into #{} )
+            #{stateS state1 state2}
+            stateS
+            {state2 (list :STRING-LITERAL 0)}
+            (make-transition-NFA [[stateS state1 "\""]
+                                  [state1 state1 UPPER-ALPHABET]
+                                  [state1 state1 LOWER-ALPHABET]
+                                  [state1 state2 "\""]]))))
+
+;; Identifiers
+;; [a-zA-Z][a-zA-Z0-9]*
+(def identifier-nfa
+  (let [stateS        (gensym :S)
+        state1        (gensym :s1)
+        state2        (gensym :s2)]
+  (make-NFA (into #{} )
+            #{stateS state1 state2}
+            stateS
+            {state1  (list :IDENTIFIER 1)
+             state2  (list :IDENTIFIER 1)}
+            (make-transition-NFA [[stateS state1 UPPER-ALPHABET]
+                                  [stateS state1 LOWER-ALPHABET]
+                                  [state1 state2 UPPER-ALPHABET]
+                                  [state1 state2 LOWER-ALPHABET]
+                                  [state2 state2 UPPER-ALPHABET]
+                                  [state2 state2 LOWER-ALPHABET]
+                                  [state2 state2 DIGITS]]))))
 ;; Operators
 (def operators-nfa
   (form-multiple-nfas :OPERATOR ">" "<" "<<" ">>" ">>>" "<<<" ">>>=" ">>="
                       ">=" "<=" "&" "&=" "=" "==" "!" "!=" "^=" "^" "+" "+="
                       "++" "-" "-=" "--" "*" "*=" "/" "/=" "%" "%="))
+
+;; white space?
 
 ;; Keywords nfa
 (def keywords-nfa
@@ -166,37 +221,20 @@
 (def bracket-nfa
   (form-multiple-nfas :BRACKET "{" "}" "(" ")" "[" "]"))
 
-
-;; Identifiers
-;; [a-zA-Z][a-zA-Z0-9]*
-(def identifier-nfa
-  (let [stateS        (gensym :S)
-        state1        (gensym :s1)
-        state2        (gensym :s2)]
-  (make-NFA (into #{} )
-            #{stateS state1 state2}
-            stateS
-            {state1  (list :IDENTIFIER 1)
-             state2  (list :IDENTIFIER 1)}
-            (make-transition-NFA [[stateS state1 UPPER-ALPHABET]
-                                  [stateS state1 LOWER-ALPHABET]
-                                  [state1 state2 UPPER-ALPHABET]
-                                  [state1 state2 LOWER-ALPHABET]
-                                  [state2 state2 UPPER-ALPHABET]
-                                  [state2 state2 LOWER-ALPHABET]
-                                  [state2 state2 DIGITS]]))))
-
 ;; complete nfa from all of the individual RE nfas
 ;; int-literal
-;; operators
-;; boolean
-;; keywords
-;; brackets
-;; identifier
+;; string-literal
+;; identifiers
+;; file specified nfas:
+;; BRACKET
+;; BOOLEAN
+;; KEYWORD
+;; UNARYOPERATOR
+;; BINARYOPERATOR
+;; ASSIGNMENTOPERATOR
+;; TERMINAL
 (def complete-nfa
   (merge-nfas integer-literal-nfa
-              operators-nfa
-              boolean-nfa
-              keywords-nfa
-              bracket-nfa
-              identifier-nfa))
+              string-literal-nfa
+              identifier-nfa
+              fileFormed-nfa))

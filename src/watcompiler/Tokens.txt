@@ -1,0 +1,8 @@
+BRACKET { } ( ) [ ]
+BOOLEAN true false
+KEYWORD abstract default if private this boolean do implements protected break double import public throws throw byte else instanceof return transient case extends int short try catch interface static void char finally final long strictfp volatile class float native super while const for new switch continue goto package synchronized
+UNARYOPERATOR + ++ - -- ! ~
+BINARYOPERATOR ==  * / % < << > >> >>> & ^ | != >= <=
+ASSIGNMENTOPERATOR = *= /= %= += -= <<= >>= >>>= &= ^= |=
+TERMINAL ; " ,
+

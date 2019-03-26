@@ -4,6 +4,15 @@
             [watcompiler.re :refer :all])
   (:import [watcompiler.nfa NFA]))
 
+;; Form the NFAs from a file
+(deftest read-file
+  (def lines readFile)
+  (def formed fileFormed-nfa)
+
+  (is (= :BRACKET (run-NFA formed "]")))
+  (is (= :BOOLEAN (run-NFA formed "true")))
+  (is (= :BRACKET (run-NFA formed "{"))))
+
 ;; Test forming multiple nfas from multiple strings
 (deftest multiple-nfas-function-test
   (def full-nfa (form-multiple-nfas :KEYWORD "int" "if"))
@@ -11,7 +20,6 @@
   (is (= :KEYWORD (run-NFA full-nfa "if")))
   (is (= false (run-NFA full-nfa "in")))
   (is (= false (run-NFA full-nfa "nt"))))
-
 
 ;; Test function forming individual nfa
 (deftest function-test
@@ -75,7 +83,7 @@
   (is (= :KEYWORD (run-NFA complete-nfa "int")))
   (is (= :KEYWORD (run-NFA complete-nfa "synchronized")))
   (is (= :INTEGER (run-NFA complete-nfa "109")))
-  (is (= :OPERATOR (run-NFA complete-nfa "++")))
+  (is (= :UNARYOPERATOR (run-NFA complete-nfa "++")))
   (is (= :BOOLEAN (run-NFA complete-nfa "true")))
   (is (= :BOOLEAN (run-NFA complete-nfa "false"))))
 
@@ -134,19 +142,19 @@
   ;; Integer
   (is (= :INTEGER (run-NFA complete-nfa "109")))
   ;; Operators
-  (is (= :OPERATOR (run-NFA complete-nfa "+")))
-  (is (= :OPERATOR (run-NFA complete-nfa "++")))
-  (is (= :OPERATOR (run-NFA complete-nfa ">")))
-  (is (= :OPERATOR (run-NFA complete-nfa ">=")))
-  (is (= :OPERATOR (run-NFA complete-nfa ">>")))
-  (is (= :OPERATOR (run-NFA complete-nfa ">>=")))
-  (is (= :OPERATOR (run-NFA complete-nfa ">>>")))
-  (is (= :OPERATOR (run-NFA complete-nfa ">>>=")))
-  (is (= :OPERATOR (run-NFA complete-nfa "&")))
-  (is (= :OPERATOR (run-NFA complete-nfa "^=")))
-  (is (= :OPERATOR (run-NFA complete-nfa "^")))
-  (is (= :OPERATOR (run-NFA complete-nfa "<<")))
-  (is (= :OPERATOR (run-NFA complete-nfa "=")))
-  (is (= :OPERATOR (run-NFA complete-nfa "==")))
-  (is (= :OPERATOR (run-NFA complete-nfa "!")))
-  (is (= :OPERATOR (run-NFA complete-nfa "!="))))
+  (is (= :UNARYOPERATOR (run-NFA complete-nfa "+")))
+  (is (= :UNARYOPERATOR (run-NFA complete-nfa "++")))
+  (is (= :BINARYOPERATOR (run-NFA complete-nfa ">")))
+  (is (= :BINARYOPERATOR (run-NFA complete-nfa ">=")))
+  (is (= :BINARYOPERATOR (run-NFA complete-nfa ">>")))
+  (is (= :ASSIGNMENTOPERATOR (run-NFA complete-nfa ">>=")))
+  (is (= :BINARYOPERATOR (run-NFA complete-nfa ">>>")))
+  (is (= :ASSIGNMENTOPERATOR (run-NFA complete-nfa ">>>=")))
+  (is (= :BINARYOPERATOR (run-NFA complete-nfa "&")))
+  (is (= :ASSIGNMENTOPERATOR (run-NFA complete-nfa "^=")))
+  (is (= :BINARYOPERATOR (run-NFA complete-nfa "^")))
+  (is (= :BINARYOPERATOR (run-NFA complete-nfa "<<")))
+  (is (= :ASSIGNMENTOPERATOR (run-NFA complete-nfa "=")))
+  (is (= :BINARYOPERATOR (run-NFA complete-nfa "==")))
+  (is (= :UNARYOPERATOR (run-NFA complete-nfa "!")))
+  (is (= :BINARYOPERATOR (run-NFA complete-nfa "!="))))
