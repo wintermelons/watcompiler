@@ -21,6 +21,12 @@
 (def DIGITS-NONZERO
   (char-range \1 \9))
 
+(def ALL-ASCII
+  (char-range 32 126))
+
+(def ESCAPABLE
+  [\b \t \n \f \r \" \' \\])
+
 (def S-PLUS \+)
 (def S-MINUS \-)
 (def S-STAR \*)

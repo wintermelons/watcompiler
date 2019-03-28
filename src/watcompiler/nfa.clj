@@ -79,7 +79,7 @@
       transition-map
       (let [[s-from s-to alphabets] (first remaining)]
         (recur (rest remaining)
-               (if (seq? alphabets)
+               (if (or (seq? alphabets) (vector? alphabets))
                  (reduce #(add-to-map %1 (list s-from %2) s-to)
                          transition-map
                          alphabets)
