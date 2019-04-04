@@ -47,9 +47,11 @@
 (deftest comment-test
   (let [comment-nfa (build-comment-nfa)]
 
-    (is (= "COMMENT" (run-NFA comment-nfa "//this is a comment ")))
+    (is (= "COMMENT" (run-NFA comment-nfa "///this is a comment ")))
     (is (= "COMMENT" (run-NFA comment-nfa "//")))
     (is (= "COMMENT" (run-NFA comment-nfa "/*multilinecomment\\n\\ncomment*/")))
+    (is (= "COMMENT" (run-NFA comment-nfa "/*multilinecomment\\n\\ncomment****/")))
+    (is (= false (run-NFA comment-nfa "//dawda\na")))
     (is (= false (run-NFA comment-nfa "/*notmultiline")))
     (is (= false (run-NFA comment-nfa "/notacomment")))))
 
