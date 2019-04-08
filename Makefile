@@ -1,0 +1,4 @@
+make:
+	
+clean:
+	$(RM) joosc

@@ -238,11 +238,3 @@
 ;; complete nfa from all of the individual RE nfas
 (def complete-nfa
   (merge-nfas file-formed-nfa))
-
-
-;; TODO
-;; sorted map in form-multiple-nfas, is it needed? YES
-
-;; slurp in file input
-
-;; Makefile, gulp compile into it
